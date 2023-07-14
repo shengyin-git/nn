@@ -215,7 +215,7 @@ visualize(pairs_train[:-1], labels_train[:-1], to_show=4, num_col=4)
 ## define the model
 # extract features using trained resnet
 base_cnn = ResNet50(weights="imagenet", input_shape=target_shape + (3,), include_top=False)
-output = resnet.layers[-1].output
+output = base_cnn.layers[-1].output
 output = layers.Flatten()(output)
 
 embedding = Model(base_cnn.input, output, name="Embedding")
