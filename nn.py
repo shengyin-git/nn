@@ -13,8 +13,9 @@ from tensorflow.keras import Model
 from tensorflow.keras.applications.resnet50 import ResNet50
 import glob
 from tensorflow.keras.preprocessing.image import ImageDataGenerator, load_img, img_to_array, array_to_img
-import pandas as pd 
-import shutil
+# import pandas as pd 
+# import shutil
+import time
 
 ## hyperparameters
 epochs = 10
@@ -79,9 +80,6 @@ cat_test_imgs_scaled /= 255
 dog_test_imgs = np.array(dog_test_imgs)
 dog_test_imgs_scaled = dog_test_imgs.astype('float32')
 dog_test_imgs_scaled /= 255
-
-
-
 
 
 # array_to_img(cat_train_imgs[0])
@@ -209,8 +207,11 @@ def visualize(pairs, labels, to_show=6, num_col=3, predictions=None, test=False)
         plt.tight_layout(rect=(0, 0, 1.5, 1.5))
     plt.show()
 
-visualize(pairs_train[:-1], labels_train[:-1], to_show=4, num_col=4)
+    ts = time.gmtime()
+    ts = time.strftime("%Y_%m_%d_%H_%M_%S", ts)
+    plt.savefig('./data/' + ts + '.png')
 
+visualize(pairs_train[:-1], labels_train[:-1], to_show=4, num_col=4)
 
 ## define the model
 # extract features using trained resnet
@@ -224,7 +225,6 @@ for layer in base_cnn.layers:
     layer.trainable = False
 
 embedding_network.summary()
-
 
 input_1 = layers.Input(target_shape + (3,))
 input_2 = layers.Input(target_shape + (3,))
@@ -281,6 +281,9 @@ def plt_metric(history, metric, title, has_valid=True):
     plt.xlabel("epoch")
     plt.show()
 
+    ts = time.gmtime()
+    ts = time.strftime("%Y_%m_%d_%H_%M_%S", ts)
+    plt.savefig('./data/' + ts + '.png')
 
 # Plot the accuracy
 plt_metric(history=history.history, metric="accuracy", title="Model Accuracy")
@@ -294,6 +297,8 @@ print("test loss, test acc:", results)
 
 predictions = nn.predict([x_test_1, x_test_2])
 visualize(pairs_test, labels_test, to_show=3, predictions=predictions, test=True)
+
+input()
 
 
 
