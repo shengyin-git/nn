@@ -218,12 +218,12 @@ base_cnn = ResNet50(weights="imagenet", input_shape=target_shape + (3,), include
 output = base_cnn.layers[-1].output
 output = layers.Flatten()(output)
 
-embedding = Model(base_cnn.input, output, name="Embedding")
+embedding_network = Model(base_cnn.input, output, name="Embedding")
 
 for layer in base_cnn.layers:
     layer.trainable = False
 
-embedding.summary()
+embedding_network.summary()
 
 
 input_1 = layers.Input(target_shape + (3,))
