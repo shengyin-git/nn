@@ -133,7 +133,7 @@ pairs_train, labels_train = make_pairs(cat_train_imgs, dog_train_imgs)
 pairs_val, labels_val = make_pairs(cat_val_imgs, dog_val_imgs)
 
 # make test pairs
-pairs_test, labels_test = make_pairs(x_test, y_test)
+pairs_test, labels_test = make_pairs(cat_test_imgs, dog_test_imgs)
 
 # Split the training pairs
 x_train_1 = pairs_train[:, 0]  # x_train_1.shape is (60000, 28, 28)
