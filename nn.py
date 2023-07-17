@@ -12,10 +12,12 @@ from tensorflow.keras import metrics
 from tensorflow.keras import Model
 from tensorflow.keras.applications.resnet50 import ResNet50
 import glob
-from tensorflow.keras.preprocessing.image import ImageDataGenerator, load_img, img_to_array, array_to_img
+from tensorflow.keras.preprocessing.image import ImageDataGenerator, apply_affine_transform, random_rotation, random_shift, load_img, img_to_array, array_to_img
 # import pandas as pd 
 # import shutil
 import time
+from tensorflow.python.ops.numpy_ops import np_config
+np_config.enable_numpy_behavior()
 
 ## hyperparameters
 epochs = 10
@@ -23,6 +25,7 @@ batch_size = 16
 target_shape = (300, 300)
 
 ## data: cats and dogs
+# !!!!!!!!!!!!!!!!!! data set from https://www.kaggle.com/c/dogs-vs-cats/data
 # load data and split train validate & test
 files = glob.glob('./data/train/*')
 cat_files = [fn for fn in files if 'cat' in fn]
@@ -81,13 +84,59 @@ dog_test_imgs = np.array(dog_test_imgs)
 dog_test_imgs_scaled = dog_test_imgs.astype('float32')
 dog_test_imgs_scaled /= 255
 
+# show the example pic and conduct rotation and transformation
 
-# array_to_img(cat_train_imgs[0])
-# fig, ax = plt.subplots(1,5,figsize=(15,6))
-# l = [ax[i].imshow(cat_train_imgs_scaled[i]) for i in range(5)]
+fig, ax = plt.subplots(4,5,figsize=(15,6))
+l = [ax[0,i].imshow(cat_train_imgs_scaled[i]) for i in range(5)]
+
+for i in range(5):
+    # y1 = apply_affine_transform(x=cat_train_imgs_scaled[i], theta=45, tx=0, ty=0, shear=0, zx=1, zy=1, row_axis=0, col_axis=1, channel_axis=2, fill_mode='nearest', cval=0.0, order=1)
+    y1 = apply_affine_transform(x=cat_train_imgs_scaled[i], theta=45, row_axis=0, col_axis=1, channel_axis=2, fill_mode='constant', cval=1.0)
+    ax[1,i].imshow(y1) 
+    y2 = apply_affine_transform(x=cat_train_imgs_scaled[i], tx=100, row_axis=0, col_axis=1, channel_axis=2, fill_mode='constant', cval=1.0)
+    ax[2,i].imshow(y2) 
+    y3 = apply_affine_transform(x=cat_train_imgs_scaled[i], ty=100, row_axis=0, col_axis=1, channel_axis=2, fill_mode='constant', cval=1.0)
+    ax[3,i].imshow(y3) 
+
 # plt.show()
-# input()
 
+input('example code for image rotation and translation.')
+
+# for i in range(5):
+#     layer_rotate = layers.RandomRotation(factor=(0.25/2,0.25/2), fill_mode='constant', fill_value=1.0,)
+#     rotate = layer_rotate(cat_train_imgs_scaled[i])
+#     rotate = rotate.astype('float32')
+#     ax[1,i].imshow(rotate) 
+
+# for i in range(5):
+#     layer_rotate = layers.RandomTranslation(height_factor=(0.25/2,0.25/2), width_factor=(0,0), fill_mode='constant', fill_value=1.0,)
+#     rotate = layer_rotate(cat_train_imgs_scaled[i])
+#     rotate = rotate.astype('float32')
+#     ax[2,i].imshow(rotate) 
+
+# for i in range(5):
+#     layer_rotate = layers.RandomTranslation(height_factor=(0,0), width_factor=(0.25/2,0.25/2), fill_mode='constant', fill_value=1.0,)
+#     rotate = layer_rotate(cat_train_imgs_scaled[i])
+#     rotate = rotate.astype('float32')
+#     ax[3,i].imshow(rotate) 
+# plt.show() 
+
+# datagen = ImageDataGenerator()
+#     rotate = datagen.apply_transform(x=cat_train_imgs[i], transform_parameters={'ty':100})
+#     rotate = random_shift(x=cat_train_imgs[i], wrg=[100,100], hrg= [0,0], fill_mode='constant')
+
+# train_datagen = ImageDataGenerator(rescale=1, zoom_range=1, rotation_range=50,\
+#     width_shift_range=0.2, height_shift_range=0.2, shear_range=0, \
+#     horizontal_flip=False, fill_mode='nearest')
+# val_datagen = ImageDataGenerator(rescale=1)
+
+# img_id = 500
+# cat_generator = train_datagen.flow(cat_train_imgs[img_id:img_id+1], batch_size=1) 
+# cat = [next(cat_generator) for i in range(5)] 
+# fig, ax = plt.subplots(1,5, figsize=(16, 6))
+# print('Labels:', [item[1][0] for item in cat]) 
+# l = [ax[i].imshow(cat[i][0][0]) for i in range(0,5)]
+# plt.show()
 
 # (x_train_val, y_train_val), (x_test, y_test) = keras.datasets.mnist.load_data()
 
@@ -212,6 +261,8 @@ def visualize(pairs, labels, to_show=6, num_col=3, predictions=None, test=False)
     plt.savefig('./data/' + ts + '.png')
 
 visualize(pairs_train[:-1], labels_train[:-1], to_show=4, num_col=4)
+
+input()
 
 ## define the model
 # extract features using trained resnet
