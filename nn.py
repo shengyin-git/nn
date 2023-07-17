@@ -98,6 +98,10 @@ for i in range(5):
     y3 = apply_affine_transform(x=cat_train_imgs_scaled[i], ty=100, row_axis=0, col_axis=1, channel_axis=2, fill_mode='constant', cval=1.0)
     ax[3,i].imshow(y3) 
 
+    ts = time.gmtime()
+    ts = time.strftime("%Y_%m_%d_%H_%M_%S", ts)
+    plt.savefig('./data/example_rotation_and_translation_' + ts + '.png')
+
 # plt.show()
 
 input('example code for image rotation and translation.')
@@ -174,13 +178,13 @@ def make_pairs(x, y):
     return np.array(pairs), np.array(labels).astype("float32")
 
 # make train pairs
-pairs_train, labels_train = make_pairs(cat_train_imgs, dog_train_imgs)
+pairs_train, labels_train = make_pairs(cat_train_imgs_scaled, dog_train_imgs_scaled)
 
 # make validation pairs
-pairs_val, labels_val = make_pairs(cat_val_imgs, dog_val_imgs)
+pairs_val, labels_val = make_pairs(cat_val_imgs_scaled, dog_val_imgs_scaled)
 
 # make test pairs
-pairs_test, labels_test = make_pairs(cat_test_imgs, dog_test_imgs)
+pairs_test, labels_test = make_pairs(cat_test_imgs_scaled, dog_test_imgs_scaled)
 
 # Split the training pairs
 x_train_1 = pairs_train[:, 0]  # x_train_1.shape is (60000, 28, 28)
@@ -235,7 +239,7 @@ def visualize(pairs, labels, to_show=6, num_col=3, predictions=None, test=False)
     to_show = num_row * num_col
 
     # Plot the images
-    fig, axes = plt.subplots(num_row, num_col, figsize=(5, 5))
+    fig, axes = plt.subplots(num_row, num_col, figsize=(10, 10))
     for i in range(to_show):
 
         # If the number of rows is 1, the axes array is one-dimensional
@@ -250,19 +254,18 @@ def visualize(pairs, labels, to_show=6, num_col=3, predictions=None, test=False)
             ax.set_title("True: {} | Pred: {:.5f}".format(labels[i], predictions[i][0]))
         else:
             ax.set_title("Label: {}".format(labels[i]))
-    if test:
-        plt.tight_layout(rect=(0, 0, 1.9, 1.9), w_pad=0.0)
-    else:
-        plt.tight_layout(rect=(0, 0, 1.5, 1.5))
-    plt.show()
-
+    # if test:
+    #     plt.tight_layout(rect=(0, 0, 1.9, 1.9), w_pad=0.0)
+    # else:
+    #     plt.tight_layout(rect=(0, 0, 1.5, 1.5))
+    
     ts = time.gmtime()
     ts = time.strftime("%Y_%m_%d_%H_%M_%S", ts)
-    plt.savefig('./data/' + ts + '.png')
+    plt.savefig('./data/example_training_pairs_' + ts + '.png')
 
-visualize(pairs_train[:-1], labels_train[:-1], to_show=4, num_col=4)
+    # plt.show()
 
-input()
+visualize(pairs_train[:-1], labels_train[:-1], to_show=3)
 
 ## define the model
 # extract features using trained resnet
@@ -330,11 +333,12 @@ def plt_metric(history, metric, title, has_valid=True):
     plt.title(title)
     plt.ylabel(metric)
     plt.xlabel("epoch")
-    plt.show()
 
     ts = time.gmtime()
     ts = time.strftime("%Y_%m_%d_%H_%M_%S", ts)
-    plt.savefig('./data/' + ts + '.png')
+    plt.savefig('./data/example_testing_pairs_' + ts + '.png')
+
+    # plt.show()
 
 # Plot the accuracy
 plt_metric(history=history.history, metric="accuracy", title="Model Accuracy")
