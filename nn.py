@@ -17,7 +17,11 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator, apply_affin
 # import shutil
 import time
 from tensorflow.python.ops.numpy_ops import np_config
+
 np_config.enable_numpy_behavior()
+from tensorflow.python.client import device_lib
+print(device_lib.list_local_devices())
+input()
 
 ## hyperparameters
 epochs = 10
@@ -104,7 +108,7 @@ for i in range(5):
 
 # plt.show()
 
-input('example code for image rotation and translation.')
+# input('example code for image rotation and translation.')
 
 # for i in range(5):
 #     layer_rotate = layers.RandomRotation(factor=(0.25/2,0.25/2), fill_mode='constant', fill_value=1.0,)
