@@ -18,10 +18,10 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator, apply_affin
 import time
 from tensorflow.python.ops.numpy_ops import np_config
 
-np_config.enable_numpy_behavior()
-from tensorflow.python.client import device_lib
-print(device_lib.list_local_devices())
-input()
+# from tensorflow.python.client import device_lib
+# print(device_lib.list_local_devices())
+# from keras import backend as K
+# K.tensorflow_backend._get_available_gpus()
 
 ## hyperparameters
 epochs = 10
