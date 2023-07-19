@@ -5,6 +5,6 @@ The inputs include two images, if both cats the label is 0, if both dogs the lab
 
 This setting up is similar to what we want to do.
 
-Our inputs include one image of masked items of one specific pile, and a mask image of the item of interest (triple the mask to make it compatible with resnet50 (like a rgb image))
+Our inputs include one image of masked items of one specific pile, and a mask image of the item of interest (triple the mask to make it compatible with resnet50 (like an rgb image))
 
 The rotation and translation function are also included. 
