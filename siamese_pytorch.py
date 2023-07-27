@@ -46,7 +46,7 @@ class SiameseNetworkDataset(Dataset):
         self.len = len(self.cat_files)
         print(self.len)
         self._index = np.arange(self.len)
-
+cat_train
     def __getitem__(self,index):
         rnd_0 = random.choice(self.cat_files)
         img0_ = Image.open(rnd_0)
@@ -74,38 +74,38 @@ class SiameseNetworkDataset(Dataset):
         
         return img0, img1, torch.from_numpy(np.array([int(label_)], dtype=np.float32))
 
-    def __getitem__(self,index):
+    # def __getitem__(self,index):
 
-        cat_train = np.random.choice(cat_files, size=1600, replace=False)
-        dog_train = np.random.choice(dog_files, size=1600, replace=False)
+    #     cat_train = np.random.choice(cat_files, size=1600, replace=False)
+    #     dog_train = np.random.choice(dog_files, size=1600, replace=False)
 
-        rnd_idx_0 = random.choice(self._index)
-        img0_ = self.cat_train_imgs[rnd_idx_0]
+    #     rnd_idx_0 = random.choice(self._index)
+    #     img0_ = self.cat_train_imgs[rnd_idx_0]
 
-        #We need to approximately 50% of images to be in the same class
-        should_get_diff_class = random.randint(0,1) 
-        # print(should_get_diff_class)
-        if should_get_diff_class:                
-            #Look untill the same class image is found
-            while True:
-                rnd_idx_1 = random.choice(self._index)
-                img1_ = self.dog_train_imgs[rnd_idx_1]
-                label_ = 1
-                if rnd_idx_1 != rnd_idx_0:
-                    break
-        else:
-            rnd_idx_1 = random.choice(self._index)
-            img1_ = self.cat_train_imgs[rnd_idx_1]
-            label_ = 0
+    #     #We need to approximately 50% of images to be in the same class
+    #     should_get_diff_class = random.randint(0,1) 
+    #     # print(should_get_diff_class)
+    #     if should_get_diff_class:                
+    #         #Look untill the same class image is found
+    #         while True:
+    #             rnd_idx_1 = random.choice(self._index)
+    #             img1_ = self.dog_train_imgs[rnd_idx_1]
+    #             label_ = 1
+    #             if rnd_idx_1 != rnd_idx_0:
+    #                 break
+    #     else:
+    #         rnd_idx_1 = random.choice(self._index)
+    #         img1_ = self.cat_train_imgs[rnd_idx_1]
+    #         label_ = 0
 
-        img0 = img0_.convert("L")
-        img1 = img1_.convert("L")
+    #     img0 = img0_.convert("L")
+    #     img1 = img1_.convert("L")
 
-        if self.transform is not None:
-            img0 = self.transform(img0)
-            img1 = self.transform(img1)
+    #     if self.transform is not None:
+    #         img0 = self.transform(img0)
+    #         img1 = self.transform(img1)
         
-        return img0, img1, torch.from_numpy(np.array([int(label_)], dtype=np.float32))
+    #     return img0, img1, torch.from_numpy(np.array([int(label_)], dtype=np.float32))
 
     def __len__(self):
         return self.len
