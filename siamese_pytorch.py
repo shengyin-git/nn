@@ -46,7 +46,7 @@ class SiameseNetworkDataset(Dataset):
         self.len = len(self.cat_files)
         print(self.len)
         self._index = np.arange(self.len)
-cat_train
+
     def __getitem__(self,index):
         rnd_0 = random.choice(self.cat_files)
         img0_ = Image.open(rnd_0)
