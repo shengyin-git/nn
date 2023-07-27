@@ -37,43 +37,48 @@ def show_plot(iteration,loss):
 
 class SiameseNetworkDataset(Dataset):
     def __init__(self,file_path,transform=None):
-        # imageFolderDataset
-        # self.imageFolderDataset = imageFolderDataset
         self.transform = transform
 
         files = glob.glob(file_path)
-        cat_files = [fn for fn in files if 'cat' in fn]
-        dog_files = [fn for fn in files if 'dog' in fn]
+        self.cat_files = [fn for fn in files if 'cat' in fn]
+        self.dog_files = [fn for fn in files if 'dog' in fn]
+
+        self.len = len(self.cat_files)
+        print(self.len)
+        self._index = np.arange(self.len)
+
+    def __getitem__(self,index):
+        rnd_0 = random.choice(self.cat_files)
+        img0_ = Image.open(rnd_0)
+
+        #We need to approximately 50% of images to be in the same class
+        should_get_diff_class = random.randint(0,1) 
+        if should_get_diff_class:                
+            rnd_1 = random.choice(self.dog_files)
+            img1_ = Image.open(rnd_1)
+            label_ = 1
+        else:
+            while True:
+                rnd_1 = random.choice(self.cat_files)
+                img1_ = Image.open(rnd_1)
+                label_ = 0
+                if rnd_0 ! rnd_1:
+                    break
+
+        img0 = img0_.convert("L")
+        img1 = img1_.convert("L")
+
+        if self.transform is not None:
+            img0 = self.transform(img0)
+            img1 = self.transform(img1)
+        
+        return img0, img1, torch.from_numpy(np.array([int(label_)], dtype=np.float32))
+
+    def __getitem__(self,index):
 
         cat_train = np.random.choice(cat_files, size=1600, replace=False)
         dog_train = np.random.choice(dog_files, size=1600, replace=False)
 
-        # cat_files = list(set(cat_files)-set(cat_train))
-        # dog_files = list(set(dog_files)-set(dog_train))
-
-        # cat_val = np.random.choice(cat_files, size=50, replace=False)
-        # dog_val = np.random.choice(dog_files, size=50, replace=False)
-
-        # cat_files = list(set(cat_files)-set(cat_val))
-        # dog_files = list(set(dog_files)-set(dog_val))
-
-        # cat_test = np.random.choice(cat_files, size=50, replace=False)
-        # dog_test = np.random.choice(dog_files, size=50, replace=False)
-
-        self.len = len(cat_train)
-        print(self.len)
-        self._index = np.arange(self.len)
-
-        self.cat_train_imgs = [Image.open(img) for img in cat_train]
-        self.dog_train_imgs = [Image.open(img) for img in dog_train]
-
-        # self.cat_val_imgs = [Image.open(img) for img in cat_val]
-        # self.dog_val_imgs = [Image.open(img) for img in dog_val]
-
-        # self.cat_test_imgs = [Image.open(img) for img in cat_test]
-        # self.dog_test_imgs = [Image.open(img) for img in dog_test]
-
-    def __getitem__(self,index):
         rnd_idx_0 = random.choice(self._index)
         img0_ = self.cat_train_imgs[rnd_idx_0]
 
