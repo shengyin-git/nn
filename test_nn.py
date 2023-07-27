@@ -330,6 +330,7 @@ def plt_metric(history, metric, title, has_valid=True):
     Returns:
         None.
     """
+    fig = plt.figure()
     plt.plot(history[metric])
     if has_valid:
         plt.plot(history["val_" + metric])
