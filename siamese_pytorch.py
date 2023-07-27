@@ -62,7 +62,7 @@ class SiameseNetworkDataset(Dataset):
                 rnd_1 = random.choice(self.cat_files)
                 img1_ = Image.open(rnd_1)
                 label_ = 0
-                if rnd_0 ! rnd_1:
+                if rnd_0 != rnd_1:
                     break
 
         img0 = img0_.convert("L")
