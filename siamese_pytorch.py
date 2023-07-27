@@ -45,8 +45,8 @@ class SiameseNetworkDataset(Dataset):
         cat_files = [fn for fn in files if 'cat' in fn]
         dog_files = [fn for fn in files if 'dog' in fn]
 
-        cat_train = np.random.choice(cat_files, size=160, replace=False)
-        dog_train = np.random.choice(dog_files, size=160, replace=False)
+        cat_train = np.random.choice(cat_files, size=1600, replace=False)
+        dog_train = np.random.choice(dog_files, size=1600, replace=False)
 
         # cat_files = list(set(cat_files)-set(cat_train))
         # dog_files = list(set(dog_files)-set(dog_train))
@@ -130,9 +130,8 @@ example_batch = next(iter(vis_dataloader))
 # If the label is 1, it means that it is not the same person, label is 0, same person in both images
 concatenated = torch.cat((example_batch[0], example_batch[1]),0)
 
-imshow(torchvision.utils.make_grid(concatenated))
+# imshow(torchvision.utils.make_grid(concatenated))
 print(example_batch[2].numpy().reshape(-1)) 
-input()
 
 #create the Siamese Neural Network
 class SiameseNetwork(nn.Module):
@@ -243,28 +242,30 @@ for epoch in range(100):
             counter.append(iteration_number)
             loss_history.append(loss_contrastive.item())
 
-show_plot(counter, loss_history)
+# show_plot(counter, loss_history)
 
-# Locate the test dataset and load it into the SiameseNetworkDataset
-folder_dataset_test = datasets.ImageFolder(root="./data/faces/testing/")
-siamese_dataset = SiameseNetworkDataset(imageFolderDataset=folder_dataset_test,
-                                        transform=transformation)
-test_dataloader = DataLoader(siamese_dataset, num_workers=2, batch_size=1, shuffle=True)
+print(loss_history)
 
-# Grab one image that we are going to test
-dataiter = iter(test_dataloader)
-x0, _, _ = next(dataiter)
+# # Locate the test dataset and load it into the SiameseNetworkDataset
+# folder_dataset_test = datasets.ImageFolder(root="./data/faces/testing/")
+# siamese_dataset = SiameseNetworkDataset(imageFolderDataset=folder_dataset_test,
+#                                         transform=transformation)
+# test_dataloader = DataLoader(siamese_dataset, num_workers=2, batch_size=1, shuffle=True)
 
-for i in range(5):
-    # Iterate over 5 images and test them with the first image (x0)
-    _, x1, label2 = next(dataiter)
+# # Grab one image that we are going to test
+# dataiter = iter(test_dataloader)
+# x0, _, _ = next(dataiter)
 
-    # Concatenate the two images together
-    concatenated = torch.cat((x0, x1), 0)
+# for i in range(5):
+#     # Iterate over 5 images and test them with the first image (x0)
+#     _, x1, label2 = next(dataiter)
+
+#     # Concatenate the two images together
+#     concatenated = torch.cat((x0, x1), 0)
     
-    output1, output2 = net(x0.cuda(), x1.cuda())
-    euclidean_distance = F.pairwise_distance(output1, output2)
-    imshow(torchvision.utils.make_grid(concatenated), f'Dissimilarity: {euclidean_distance.item():.2f}')
+#     output1, output2 = net(x0.cuda(), x1.cuda())
+#     euclidean_distance = F.pairwise_distance(output1, output2)
+#     imshow(torchvision.utils.make_grid(concatenated), f'Dissimilarity: {euclidean_distance.item():.2f}')
 
 
 
