@@ -282,7 +282,7 @@ for epoch in range(n_epochs):
     x1_batch , x2_batch , y_batch = data
     x1_batch = x1_batch.to(device) #move to gpu
     x2_batch = x2_batch.to(device)
-    y_batch = y_batch.unsqueeze(1).float() #convert target to same nn output shape
+    # y_batch = y_batch.unsqueeze(1).float() #convert target to same nn output shape
     y_batch = y_batch.to(device) #move to gpu
 
 
@@ -300,7 +300,7 @@ for epoch in range(n_epochs):
       x1_batch , x2_batch , y_batch = data
       x1_batch = x1_batch.to(device) #move to gpu
       x2_batch = x2_batch.to(device)
-      y_batch = y_batch.unsqueeze(1).float() #convert target to same nn output shape
+    #   y_batch = y_batch.unsqueeze(1).float() #convert target to same nn output shape
       y_batch = y_batch.to(device) #move to gpu
 
       #model to eval mode
