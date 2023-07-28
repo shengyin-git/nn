@@ -138,7 +138,7 @@ example_batch = next(iter(vis_dataloader))
 # If the label is 1, it means that it is not the same person, label is 0, same person in both images
 concatenated = torch.cat((example_batch[0], example_batch[1]),0)
 
-imshow(torchvision.utils.make_grid(concatenated))
+# imshow(torchvision.utils.make_grid(concatenated))
 print(example_batch[2].numpy().reshape(-1)) 
 
 #create the Siamese Neural Network
@@ -334,35 +334,25 @@ for epoch in range(n_epochs):
 #load best model
 # model.load_state_dict(best_model_wts)
 
-##
+############################################################
 
-def inference(test_data):
-#   idx = torch.randint(1, len(test_data), (1,))
-    sample1 = test_data[0] #torch.unsqueeze([0], dim=0).to(device)
-    sample2 = test_data[1] #torch.unsqueeze(test_data[idx][1], dim=0).to(device)
-    with torch.no_grad():
-        for ij in range(len(sample1)):
+with torch.no_grad():
 
-            if torch.sigmoid(net(sample1[ij].to(device),sample2[ij].to(device))) < 0.5:
-                print("Prediction : Cat")
-            else:
-                print("Prediction : Dog")
+    for x1_batch , x2_batch, y_batch in tes_dataloader:
+      x1_batch = x1_batch.to(device)
+      x2_batch = x2_batch.to(device)
+    #   y_batch = y_batch.unsqueeze(1).float() #convert target to same nn output shape
+      y_batch = y_batch.to(device) #move to gpu
+
+      #model to eval mode
+      net.eval()
+
+      yhat = net(x1_batch,x2_batch)
+      yhat_ = torch.sigmoid(yhat)
+      print(yhat_.numpy().reshape(-1))
+      print(example_batch[2].numpy().reshape(-1)) 
 
 
-#   plt.imshow(test_data[idx][0].permute(1, 2, 0))
-
-vis_dataloader = DataLoader(tes_dataset,
-                        shuffle=True,
-                        num_workers=1,
-                        batch_size=8)
-
-# Extract one batch
-example_batch = next(iter(vis_dataloader))
-inference(example_batch)
-
-# concatenated = torch.cat((example_batch[0], example_batch[1]),0)
-# imshow(torchvision.utils.make_grid(concatenated))
-print(example_batch[2].numpy().reshape(-1)) 
 
 
 
