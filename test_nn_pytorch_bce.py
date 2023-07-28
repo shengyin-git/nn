@@ -287,7 +287,7 @@ for epoch in range(n_epochs):
 
 
     loss = train_step((x1_batch,x2_batch), y_batch)
-    epoch_loss += loss/len(trainloader)
+    epoch_loss += loss/len(train_dataloader)
     losses.append(loss)
     
   epoch_train_losses.append(epoch_loss)
