@@ -338,7 +338,7 @@ for epoch in range(n_epochs):
 
 def inference(test_data):
 #   idx = torch.randint(1, len(test_data), (1,))
-  for idx in range(len(test_data))
+  for idx in range(len(test_data)):
     sample1 = torch.unsqueeze(test_data[idx][0], dim=0).to(device)
     sample2 = torch.unsqueeze(test_data[idx][1], dim=0).to(device)
     #   sample = torch.unsqueeze(test_data[idx][0], dim=0).to(device)
