@@ -296,9 +296,8 @@ for epoch in range(n_epochs):
   #validation doesnt requires gradient
   with torch.no_grad():
     cum_loss = 0
-    for x_batch, y_batch in train_dataloader:
-      x1_batch , x2_batch , y_batch = data
-      x1_batch = x1_batch.to(device) #move to gpu
+    for x1_batch , x2_batch, y_batch in train_dataloader:
+      x1_batch = x1_batch.to(device)
       x2_batch = x2_batch.to(device)
     #   y_batch = y_batch.unsqueeze(1).float() #convert target to same nn output shape
       y_batch = y_batch.to(device) #move to gpu
