@@ -102,7 +102,6 @@ imshow(torchvision.utils.make_grid(concatenated))
 print(example_batch[2].numpy().reshape(-1)) 
 input()
 
-
 #create the Siamese Neural Network
 class SiameseNetwork(nn.Module):
 

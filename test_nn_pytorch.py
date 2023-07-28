@@ -7,11 +7,13 @@ import PIL.ImageOps
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 import torchvision
+from torchvision import models
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
-from torch.utils.data import DataLoader, Dataset
 import torchvision.utils
+
 import torch
+from torch.utils.data import DataLoader, Dataset
 from torch.autograd import Variable
 import torch.nn as nn
 from torch import optim
@@ -64,11 +66,9 @@ class SiameseNetworkDataset(Dataset):
                 label_ = 0
                 if rnd_0 != rnd_1:
                     break
-        print(np.shape(img0_))
+
         img0 = img0_.convert("L")
         img1 = img1_.convert("L")
-
-        print(np.shape(img0))
 
         if self.transform is not None:
             img0 = self.transform(img0)
@@ -108,24 +108,17 @@ imshow(torchvision.utils.make_grid(concatenated))
 print(example_batch[2].numpy().reshape(-1)) 
 
 #create the Siamese Neural Network
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 class SiameseNetwork(nn.Module):
 
     def __init__(self):
         super(SiameseNetwork, self).__init__()
 
         # Setting up the Sequential of CNN Layers
-        self.cnn1 = nn.Sequential(
-            nn.Conv2d(1, 96, kernel_size=11,stride=4),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(3, stride=2),
-            
-            nn.Conv2d(96, 256, kernel_size=5, stride=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(2, stride=2),
-
-            nn.Conv2d(256, 384, kernel_size=3,stride=1),
-            nn.ReLU(inplace=True)
-        )
+        self.cnn1 = models.resnet50(pretrained=True).to(device)
+        for param in self.cnn1.parameters():
+            param.requires_grad = False  
 
         # Setting up the Fully Connected Layers
         self.fc1 = nn.Sequential(
