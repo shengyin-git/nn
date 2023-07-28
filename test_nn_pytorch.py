@@ -140,6 +140,7 @@ class SiameseNetwork(nn.Module):
         # Its output is used to determine the similiarity
         output = self.cnn1(x)
         output = output.view(output.size()[0], -1)
+        print(output)
         output = self.fc1(output)
         return output
 
