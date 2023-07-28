@@ -353,7 +353,7 @@ with torch.no_grad():
 
       yhat = net(x1_batch,x2_batch)
       yhat_ = torch.sigmoid(yhat)
-      print(yhat_.numpy().reshape(-1))
+      print(yhat_.cpu().numpy().reshape(-1))
       print(example_batch[2].numpy().reshape(-1)) 
 
 
