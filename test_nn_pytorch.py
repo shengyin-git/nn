@@ -166,7 +166,7 @@ train_dataloader = DataLoader(siamese_dataset,
 from torch.nn.modules.loss import BCEWithLogitsLoss
 from torch.optim import lr_scheduler
 
-net = SiameseNetwork().to(device)#cuda()
+net = SiameseNetwork().cuda()# to(device)
 # criterion = ContrastiveLoss()
 # optimizer = optim.Adam(net.parameters(), lr = 0.0005 )
 
@@ -174,7 +174,7 @@ net = SiameseNetwork().to(device)#cuda()
 loss_fn = BCEWithLogitsLoss() #binary cross entropy with sigmoid, so no need to use sigmoid in the model
 
 #optimizer
-optimizer = torch.optim.Adam(model.fc.parameters()) 
+optimizer = torch.optim.Adam(net.fc.parameters()) 
 
 # #train step
 # def make_train_step(model, optimizer, loss_fn):
