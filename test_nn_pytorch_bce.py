@@ -1,4 +1,3 @@
-# %matplotlib inline
 import matplotlib.pyplot as plt
 import numpy as np
 import random
@@ -38,17 +37,51 @@ def show_plot(iteration,loss):
     plt.plot(iteration,loss)
     plt.show()
 
+def split_train_val_tes(file_path, num_ = None, ratio_=None):
+    files = glob.glob(file_path)
+    cat_files = [fn for fn in files if 'cat' in fn]
+    dog_files = [fn for fn in files if 'dog' in fn]
+    len_ = min(len(cat_files), len(dog_files))
+
+    if num_ is not None:
+        num_train, num_val, num_tes = num_
+    else:
+        num_train = np.int32(len_*ratio_[0])
+        num_val = min(np.int32(len_*ratio_[1]), len_-num_train)
+        num_tes = min(np.int32(len_*ratio_[2]), len_-num_train-num_val)
+
+    cat_train = np.random.choice(cat_files, size=num_train, replace=False)
+    dog_train = np.random.choice(dog_files, size=num_train, replace=False)
+
+    cat_files = list(set(cat_files)-set(cat_train))
+    dog_files = list(set(dog_files)-set(dog_train))
+
+    cat_val = np.random.choice(cat_files, size=num_val, replace=False)
+    dog_val = np.random.choice(dog_files, size=num_val, replace=False)
+
+    cat_files = list(set(cat_files)-set(cat_val))
+    dog_files = list(set(dog_files)-set(cat_val))
+
+    cat_tes = np.random.choice(cat_files, size=num_tes, replace=False)
+    dog_tes = np.random.choice(dog_files, size=num_tes, replace=False)
+
+    train_ = [cat_train,dog_train]
+    val_ = [cat_val,dog_val]
+    tes_ = [cat_tes,dog_tes]
+
+    return train_, val_, tes_
+
 class SiameseNetworkDataset(Dataset):
     def __init__(self,file_path,transform=None):
         self.transform = transform
 
-        files = glob.glob(file_path)
-        self.cat_files = [fn for fn in files if 'cat' in fn]
-        self.dog_files = [fn for fn in files if 'dog' in fn]
+        self.cat_files = file_path[0]
+        self.dog_files = file_path[1]
 
-        self.len = len(self.cat_files)
-        print(self.len)
-        self._index = np.arange(self.len)
+        self.len_ = min(len(self.cat_files), len(self.dog_files))
+
+        self.num_train = np.int32(self.len*0.8) # 1500
+        self.num_val = len_ - self.num_train # 100  
 
     def __getitem__(self,index):
         rnd_0 = random.choice(self.cat_files)
@@ -68,11 +101,8 @@ class SiameseNetworkDataset(Dataset):
                 if rnd_0 != rnd_1:
                     break
 
-        img0 = img0_
-        img1 = img1_
-
-        # img0 = img0_.convert("L")
-        # img1 = img1_.convert("L")
+        img0 = img0_ # img0 = img0_.convert("L")
+        img1 = img1_ # img1 = img1_.convert("L")
 
         if self.transform is not None:
             img0 = self.transform(img0)
@@ -81,20 +111,18 @@ class SiameseNetworkDataset(Dataset):
         return img0, img1, torch.from_numpy(np.array([int(label_)], dtype=np.float32))
 
     def __len__(self):
-        return self.len
+        return self.len_
 
 # Load the training dataset
-# folder_dataset = datasets.ImageFolder(root="./data/train/*")
-
 # Resize the images and transform to tensors
+train_, val_, tes_ = split_train_val_tes(file_path, num_=[1500,150,0])
+# train_, val_, tes_ = split_train_val_tes(file_path, ratio_=[0.7,0.15,0.15])
 transformation = transforms.Compose([transforms.Resize((100,100)),
                                      transforms.ToTensor()
                                     ])
 
-# Initialize the network
-siamese_dataset = SiameseNetworkDataset(file_path="./data/train/*",
+siamese_dataset = SiameseNetworkDataset(file_path=train_,
                                         transform=transformation)
-
 # Create a simple dataloader just for simple visualization
 vis_dataloader = DataLoader(siamese_dataset,
                         shuffle=True,
@@ -112,7 +140,7 @@ imshow(torchvision.utils.make_grid(concatenated))
 print(example_batch[2].numpy().reshape(-1)) 
 
 #create the Siamese Neural Network
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = "cuda" if torch.cuda.is_available() else "cpu" # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class Identity(nn.Module):
     def __init__(self):
@@ -121,10 +149,7 @@ class Identity(nn.Module):
     def forward(self, x):
         return x
 
-
-
 class SiameseNetwork(nn.Module):
-
     def __init__(self):
         super(SiameseNetwork, self).__init__()
 
@@ -166,9 +191,7 @@ train_dataloader = DataLoader(siamese_dataset,
 from torch.nn.modules.loss import BCEWithLogitsLoss
 from torch.optim import lr_scheduler
 
-net = SiameseNetwork().cuda()# to(device)
-# criterion = ContrastiveLoss()
-# optimizer = optim.Adam(net.parameters(), lr = 0.0005 )
+net = SiameseNetwork().to(device)# to(device) cuda()
 
 #loss
 loss_fn = BCEWithLogitsLoss() #binary cross entropy with sigmoid, so no need to use sigmoid in the model
@@ -176,25 +199,9 @@ loss_fn = BCEWithLogitsLoss() #binary cross entropy with sigmoid, so no need to 
 #optimizer
 optimizer = torch.optim.Adam(net.fc.parameters()) 
 
-# #train step
-# def make_train_step(model, optimizer, loss_fn):
-#   def train_step(x,y):
-#     #make prediction
-#     yhat = model(x)
-#     #enter train mode
-#     model.train()
-#     #compute loss
-#     loss = loss_fn(yhat,y)
 
-#     loss.backward()
-#     optimizer.step()
-#     optimizer.zero_grad()
-#     #optimizer.cleargrads()
-
-#     return loss
-#   return train_step
-# train_step = make_train_step(model, optimizer, loss_fn)
-
+#######################################################################################
+## training process 
 counter = []
 loss_history = [] 
 iteration_number= 0
@@ -206,7 +213,7 @@ for epoch in range(100):
     for i, (img0, img1, label) in enumerate(train_dataloader, 0):
 
         # Send the images and labels to CUDA
-        img0, img1, label = img0.cuda(), img1.cuda(), label.cuda()
+        img0, img1, label = img0.to(device), img1.to(device), label.to(device)
 
         # Zero the gradients
         optimizer.zero_grad()
@@ -233,28 +240,92 @@ for epoch in range(100):
 
 # show_plot(counter, loss_history)
 
-# # Locate the test dataset and load it into the SiameseNetworkDataset
-# folder_dataset_test = datasets.ImageFolder(root="./data/faces/testing/")
-# siamese_dataset = SiameseNetworkDataset(imageFolderDataset=folder_dataset_test,
-#                                         transform=transformation)
-# test_dataloader = DataLoader(siamese_dataset, num_workers=2, batch_size=1, shuffle=True)
+################################################################################################
 
-# # Grab one image that we are going to test
-# dataiter = iter(test_dataloader)
-# x0, _, _ = next(dataiter)
+# def make_train_step(model, optimizer, loss_fn):
+#   def train_step(x,y):
+#     #make prediction
+#     yhat = model(x)
+#     #enter train mode
+#     model.train()
+#     #compute loss
+#     loss = loss_fn(yhat,y)
 
-# for i in range(5):
-#     # Iterate over 5 images and test them with the first image (x0)
-#     _, x1, label2 = next(dataiter)
+#     loss.backward()
+#     optimizer.step()
+#     optimizer.zero_grad()
+#     #optimizer.cleargrads()
 
-#     # Concatenate the two images together
-#     concatenated = torch.cat((x0, x1), 0)
+#     return loss
+#   return train_step
+
+# train_step = make_train_step(model, optimizer, loss_fn)
+
+# from tqdm import tqdm
+
+# losses = []
+# val_losses = []
+
+# epoch_train_losses = []
+# epoch_test_losses = []
+
+# n_epochs = 10
+# early_stopping_tolerance = 3
+# early_stopping_threshold = 0.03
+
+# for epoch in range(n_epochs):
+#   epoch_loss = 0
+#   for i ,data in tqdm(enumerate(trainloader), total = len(trainloader)): #iterate ove batches
+#     x_batch , y_batch = data
+#     x_batch = x_batch.to(device) #move to gpu
+#     y_batch = y_batch.unsqueeze(1).float() #convert target to same nn output shape
+#     y_batch = y_batch.to(device) #move to gpu
+
+
+#     loss = train_step(x_batch, y_batch)
+#     epoch_loss += loss/len(trainloader)
+#     losses.append(loss)
     
-#     output1, output2 = net(x0.cuda(), x1.cuda())
-#     euclidean_distance = F.pairwise_distance(output1, output2)
-#     imshow(torchvision.utils.make_grid(concatenated), f'Dissimilarity: {euclidean_distance.item():.2f}')
+#   epoch_train_losses.append(epoch_loss)
+#   print('\nEpoch : {}, train loss : {}'.format(epoch+1,epoch_loss))
+
+#   #validation doesnt requires gradient
+#   with torch.no_grad():
+#     cum_loss = 0
+#     for x_batch, y_batch in testloader:
+#       x_batch = x_batch.to(device)
+#       y_batch = y_batch.unsqueeze(1).float() #convert target to same nn output shape
+#       y_batch = y_batch.to(device)
+
+#       #model to eval mode
+#       model.eval()
+
+#       yhat = model(x_batch)
+#       val_loss = loss_fn(yhat,y_batch)
+#       cum_loss += loss/len(testloader)
+#       val_losses.append(val_loss.item())
 
 
+#     epoch_test_losses.append(cum_loss)
+#     print('Epoch : {}, val loss : {}'.format(epoch+1,cum_loss))  
+    
+#     best_loss = min(epoch_test_losses)
+    
+#     #save best model
+#     if cum_loss <= best_loss:
+#       best_model_wts = model.state_dict()
+    
+#     #early stopping
+#     early_stopping_counter = 0
+#     if cum_loss > best_loss:
+#       early_stopping_counter +=1
+
+#     if (early_stopping_counter == early_stopping_tolerance) or (best_loss <= early_stopping_threshold):
+#       print("/nTerminating: early stopping")
+#       break #terminate training
+    
+# #load best model
+# model.load_state_dict(best_model_wts)
 
 
 
