@@ -8,6 +8,7 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 import torchvision
 from torchvision import models
+from torchvision.models import ResNet50_Weights
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 import torchvision.utils
