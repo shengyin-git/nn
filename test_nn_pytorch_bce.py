@@ -262,7 +262,7 @@ def make_train_step(model, optimizer, loss_fn):
     return loss
   return train_step
 
-train_step = make_train_step(model, optimizer, loss_fn)
+train_step = make_train_step(net, optimizer, loss_fn)
 
 from tqdm import tqdm
 
