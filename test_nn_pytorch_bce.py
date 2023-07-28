@@ -335,7 +335,7 @@ for epoch in range(n_epochs):
 # model.load_state_dict(best_model_wts)
 
 ############################################################
-val_dataloader = DataLoader(val_dataset,
+tes_dataloader = DataLoader(val_dataset,
                         shuffle=True,
                         num_workers=1,
                         batch_size=8)
