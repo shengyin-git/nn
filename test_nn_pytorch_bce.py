@@ -338,9 +338,11 @@ for epoch in range(n_epochs):
 
 def inference(test_data):
   idx = torch.randint(1, len(test_data), (1,))
-  sample = torch.unsqueeze(test_data[idx][0], dim=0).to(device)
+  sample1 = torch.unsqueeze(test_data[idx][0], dim=0).to(device)
+  sample2 = torch.unsqueeze(test_data[idx][1], dim=0).to(device)
+#   sample = torch.unsqueeze(test_data[idx][0], dim=0).to(device)
 
-  if torch.sigmoid(net(sample)) < 0.5:
+  if torch.sigmoid(net(sample1,sample2)) < 0.5:
     print("Prediction : Cat")
   else:
     print("Prediction : Dog")
