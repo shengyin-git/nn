@@ -138,7 +138,7 @@ example_batch = next(iter(vis_dataloader))
 # If the label is 1, it means that it is not the same person, label is 0, same person in both images
 concatenated = torch.cat((example_batch[0], example_batch[1]),0)
 
-# imshow(torchvision.utils.make_grid(concatenated))
+imshow(torchvision.utils.make_grid(concatenated))
 print(example_batch[2].numpy().reshape(-1)) 
 
 #create the Siamese Neural Network
@@ -338,15 +338,15 @@ for epoch in range(n_epochs):
 
 def inference(test_data):
 #   idx = torch.randint(1, len(test_data), (1,))
-  for idx in range(len(test_data)):
-    sample1 = torch.unsqueeze(test_data[idx][0], dim=0).to(device)
-    sample2 = torch.unsqueeze(test_data[idx][1], dim=0).to(device)
-    #   sample = torch.unsqueeze(test_data[idx][0], dim=0).to(device)
+    sample1 = test_data[0] #torch.unsqueeze([0], dim=0).to(device)
+    sample2 = test_data[1] #torch.unsqueeze(test_data[idx][1], dim=0).to(device)
+    with torch.no_grad():
+        for ij in range(len(sample1)):
 
-    if torch.sigmoid(net(sample1,sample2)) < 0.5:
-        print("Prediction : Cat")
-    else:
-        print("Prediction : Dog")
+            if torch.sigmoid(net(sample1[ij].to(device),sample2[ij].to(device))) < 0.5:
+                print("Prediction : Cat")
+            else:
+                print("Prediction : Dog")
 
 
 #   plt.imshow(test_data[idx][0].permute(1, 2, 0))
