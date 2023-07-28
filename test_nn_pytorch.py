@@ -114,6 +114,13 @@ print(example_batch[2].numpy().reshape(-1))
 #create the Siamese Neural Network
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+class Identity(nn.Module):
+    def __init__(self):
+        super().__init__()
+        
+    def forward(self, x):
+        return x
+
 class SiameseNetwork(nn.Module):
 
     def __init__(self):
@@ -128,18 +135,18 @@ class SiameseNetwork(nn.Module):
 
         print(num_ftrs_resnet)
 
-        self.resnet.fc = nn.Flatten()
+        self.resnet.fc = Identity() #nn.Flatten()
 
         # # Setting up the Fully Connected Layers
-        # self.fc1 = nn.Sequential(
-        #     nn.Linear(384, 1024),
-        #     nn.ReLU(inplace=True),
+        self.fc1 = nn.Sequential(
+            nn.Linear(num_ftrs_resnet, 1024),
+            nn.ReLU(inplace=True),
             
-        #     nn.Linear(1024, 256),
-        #     nn.ReLU(inplace=True),
+            nn.Linear(1024, 256),
+            nn.ReLU(inplace=True),
             
-        #     nn.Linear(256,2)
-        # )
+            nn.Linear(256,2)
+        )
 
 
 
