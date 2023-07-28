@@ -121,66 +121,41 @@ class Identity(nn.Module):
     def forward(self, x):
         return x
 
+
+
 class SiameseNetwork(nn.Module):
 
     def __init__(self):
         super(SiameseNetwork, self).__init__()
 
         # Setting up the Sequential of CNN Layers
-        self.resnet = models.resnet50(weights=ResNet50_Weights.DEFAULT).to(device)
+        self.resnet = models.resnet50(weights=ResNet50_Weights.DEFAULT) #.to(device)
         for param in self.resnet.parameters():
             param.requires_grad = False
 
         num_ftrs_resnet = self.resnet.fc.in_features
 
-        print(num_ftrs_resnet)
-
-        self.resnet.fc = Identity() #nn.Flatten()
+        self.resnet.fc = nn.Flatten() # Identity()
 
         # # Setting up the Fully Connected Layers
-        self.fc1 = nn.Sequential(
-            nn.Linear(num_ftrs_resnet, 1024),
+        self.fc = nn.Sequential(
+            nn.Linear(num_ftrs_resnet*2, 1024),
             nn.ReLU(inplace=True),
             
             nn.Linear(1024, 256),
             nn.ReLU(inplace=True),
             
-            nn.Linear(256,2)
+            nn.Linear(256,1)
         )
 
-
-
-        
-    def forward_once(self, x):
-        # This function will be called for both images
-        # Its output is used to determine the similiarity
-        output = self.resnet(x)
-        return output
-
     def forward(self, input1, input2):
-        # In this function we pass in both images and obtain both vectors
-        # which are returned
-        output1 = self.forward_once(input1)
-        output2 = self.forward_once(input2)
-        print(output1.shape)
+        # In this function we pass in both images and obtain both vectors which are returned
+        output1 = self.resnet(input1)
+        output2 = self.resnet(input2)
 
-        return output1, output2
-
-# Define the Contrastive Loss Function
-class ContrastiveLoss(torch.nn.Module):
-    def __init__(self, margin=2.0):
-        super(ContrastiveLoss, self).__init__()
-        self.margin = margin
-
-    def forward(self, output1, output2, label):
-      # Calculate the euclidean distance and calculate the contrastive loss
-      euclidean_distance = F.pairwise_distance(output1, output2, keepdim = True)
-
-      loss_contrastive = torch.mean((1-label) * torch.pow(euclidean_distance, 2) +
-                                    (label) * torch.pow(torch.clamp(self.margin - euclidean_distance, min=0.0), 2))
-
-
-      return loss_contrastive
+        output12 = self.cat((output1, output2),1)
+        output = self.fn(output12)
+        return output
 
 # Load the training dataset
 train_dataloader = DataLoader(siamese_dataset,
@@ -188,9 +163,37 @@ train_dataloader = DataLoader(siamese_dataset,
                         num_workers=8,
                         batch_size=64)
 
-net = SiameseNetwork().cuda()
-criterion = ContrastiveLoss()
-optimizer = optim.Adam(net.parameters(), lr = 0.0005 )
+from torch.nn.modules.loss import BCEWithLogitsLoss
+from torch.optim import lr_scheduler
+
+net = SiameseNetwork().to(device)#cuda()
+# criterion = ContrastiveLoss()
+# optimizer = optim.Adam(net.parameters(), lr = 0.0005 )
+
+#loss
+loss_fn = BCEWithLogitsLoss() #binary cross entropy with sigmoid, so no need to use sigmoid in the model
+
+#optimizer
+optimizer = torch.optim.Adam(model.fc.parameters()) 
+
+# #train step
+# def make_train_step(model, optimizer, loss_fn):
+#   def train_step(x,y):
+#     #make prediction
+#     yhat = model(x)
+#     #enter train mode
+#     model.train()
+#     #compute loss
+#     loss = loss_fn(yhat,y)
+
+#     loss.backward()
+#     optimizer.step()
+#     optimizer.zero_grad()
+#     #optimizer.cleargrads()
+
+#     return loss
+#   return train_step
+# train_step = make_train_step(model, optimizer, loss_fn)
 
 counter = []
 loss_history = [] 
@@ -209,10 +212,10 @@ for epoch in range(100):
         optimizer.zero_grad()
 
         # Pass in the two images into the network and obtain two outputs
-        output1, output2 = net(img0, img1)
+        output = net(img0, img1)
 
         # Pass the outputs of the networks and label into the loss function
-        loss_contrastive = criterion(output1, output2, label)
+        loss_contrastive = loss_fn(output, label)
 
         # Calculate the backpropagation
         loss_contrastive.backward()
