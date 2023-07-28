@@ -112,8 +112,8 @@ class SiameseNetworkDataset(Dataset):
 
 # Load the training dataset
 # Resize the images and transform to tensors
-# train_, val_, tes_ = split_train_val_tes(file_path='./data/train/*', num_=[1500,150,0])
-train_, val_, tes_ = split_train_val_tes(file_path='./data/train/*', ratio_=[0.7,0.15,0.15])
+train_, val_, tes_ = split_train_val_tes(file_path='./data/train/*', num_=[1500,150,0])
+# train_, val_, tes_ = split_train_val_tes(file_path='./data/train/*', ratio_=[0.7,0.15,0.15])
 transformation = transforms.Compose([transforms.Resize((100,100)),
                                      transforms.ToTensor()
                                     ])
@@ -272,9 +272,9 @@ val_losses = []
 epoch_train_losses = []
 epoch_test_losses = []
 
-n_epochs = 10
+n_epochs = 100
 early_stopping_tolerance = 3
-early_stopping_threshold = 0.03
+early_stopping_threshold = 0.01
 
 for epoch in range(n_epochs):
   epoch_loss = 0
