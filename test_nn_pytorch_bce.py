@@ -122,6 +122,9 @@ train_dataset = SiameseNetworkDataset(file_path=train_,
                                         transform=transformation)
 val_dataset = SiameseNetworkDataset(file_path=val_,
                                         transform=transformation)
+
+tes_dataset = SiameseNetworkDataset(file_path=tes_,
+                                        transform=transformation)
 # Create a simple dataloader just for simple visualization
 vis_dataloader = DataLoader(train_dataset,
                         shuffle=True,
@@ -244,7 +247,6 @@ optimizer = torch.optim.Adam(net.fc.parameters())
 # show_plot(counter, loss_history)
 
 ################################################################################################
-
 def make_train_step(model, optimizer, loss_fn):
   def train_step(x,y):
     #make prediction
@@ -331,6 +333,33 @@ for epoch in range(n_epochs):
     
 #load best model
 # model.load_state_dict(best_model_wts)
+
+##
+
+def inference(test_data):
+  idx = torch.randint(1, len(test_data), (1,))
+  sample = torch.unsqueeze(test_data[idx][0], dim=0).to(device)
+
+  if torch.sigmoid(model(sample)) < 0.5:
+    print("Prediction : Cat")
+  else:
+    print("Prediction : Dog")
+
+
+#   plt.imshow(test_data[idx][0].permute(1, 2, 0))
+
+vis_dataloader = DataLoader(tes_dataset,
+                        shuffle=True,
+                        num_workers=1,
+                        batch_size=8)
+
+# Extract one batch
+example_batch = next(iter(vis_dataloader))
+inference(example_batch)
+
+# concatenated = torch.cat((example_batch[0], example_batch[1]),0)
+# imshow(torchvision.utils.make_grid(concatenated))
+print(example_batch[2].numpy().reshape(-1)) 
 
 
 
