@@ -115,7 +115,7 @@ class SiameseNetworkDataset(Dataset):
 
 # Load the training dataset
 # Resize the images and transform to tensors
-train_, val_, tes_ = split_train_val_tes(file_path, num_=[1500,150,0])
+train_, val_, tes_ = split_train_val_tes(file_path='./data/train/*', num_=[1500,150,0])
 # train_, val_, tes_ = split_train_val_tes(file_path, ratio_=[0.7,0.15,0.15])
 transformation = transforms.Compose([transforms.Resize((100,100)),
                                      transforms.ToTensor()
@@ -136,7 +136,7 @@ example_batch = next(iter(vis_dataloader))
 # If the label is 1, it means that it is not the same person, label is 0, same person in both images
 concatenated = torch.cat((example_batch[0], example_batch[1]),0)
 
-imshow(torchvision.utils.make_grid(concatenated))
+# imshow(torchvision.utils.make_grid(concatenated))
 print(example_batch[2].numpy().reshape(-1)) 
 
 #create the Siamese Neural Network
