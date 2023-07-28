@@ -67,8 +67,11 @@ class SiameseNetworkDataset(Dataset):
                 if rnd_0 != rnd_1:
                     break
 
-        img0 = img0_.convert("L")
-        img1 = img1_.convert("L")
+        img0 = img0_
+        img1 = img1_
+
+        # img0 = img0_.convert("L")
+        # img1 = img1_.convert("L")
 
         if self.transform is not None:
             img0 = self.transform(img0)
@@ -116,7 +119,7 @@ class SiameseNetwork(nn.Module):
         super(SiameseNetwork, self).__init__()
 
         # Setting up the Sequential of CNN Layers
-        self.cnn1 = models.resnet50(pretrained=True).to(device)
+        self.cnn1 = models.resnet50(weights=ResNet50_Weights.DEFAULT).to(device)
         for param in self.cnn1.parameters():
             param.requires_grad = False  
 
