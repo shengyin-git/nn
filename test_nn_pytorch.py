@@ -120,28 +120,34 @@ class SiameseNetwork(nn.Module):
         super(SiameseNetwork, self).__init__()
 
         # Setting up the Sequential of CNN Layers
-        self.cnn1 = models.resnet50(weights=ResNet50_Weights.DEFAULT).to(device)
-        for param in self.cnn1.parameters():
-            param.requires_grad = False  
+        self.resnet = models.resnet50(weights=ResNet50_Weights.DEFAULT).to(device)
+        for param in self.resnet.parameters():
+            param.requires_grad = False
 
-        # Setting up the Fully Connected Layers
-        self.fc1 = nn.Sequential(
-            nn.Linear(384, 1024),
-            nn.ReLU(inplace=True),
+        num_ftrs_resnet = self.resnet.fc.in_features
+
+        print(num_ftrs_resnet)
+
+        self.resnet.fc = nn.Flatten()
+
+        # # Setting up the Fully Connected Layers
+        # self.fc1 = nn.Sequential(
+        #     nn.Linear(384, 1024),
+        #     nn.ReLU(inplace=True),
             
-            nn.Linear(1024, 256),
-            nn.ReLU(inplace=True),
+        #     nn.Linear(1024, 256),
+        #     nn.ReLU(inplace=True),
             
-            nn.Linear(256,2)
-        )
+        #     nn.Linear(256,2)
+        # )
+
+
+
         
     def forward_once(self, x):
         # This function will be called for both images
         # Its output is used to determine the similiarity
-        output = self.cnn1(x)
-        output = output.view(output.size()[0], -1)
-        print(output)
-        output = self.fc1(output)
+        output = self.resnet(x)
         return output
 
     def forward(self, input1, input2):
@@ -149,6 +155,7 @@ class SiameseNetwork(nn.Module):
         # which are returned
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
+        print(output1.shape)
 
         return output1, output2
 
