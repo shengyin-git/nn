@@ -303,9 +303,9 @@ for epoch in range(n_epochs):
       y_batch = y_batch.to(device) #move to gpu
 
       #model to eval mode
-      model.eval()
+      net.eval()
 
-      yhat = model(x1_batch,x2_batch)
+      yhat = net(x1_batch,x2_batch)
       val_loss = loss_fn(yhat,y_batch)
       cum_loss += loss/len(train_dataloader)
       val_losses.append(val_loss.item())
@@ -318,7 +318,7 @@ for epoch in range(n_epochs):
     
     #save best model
     if cum_loss <= best_loss:
-      best_model_wts = model.state_dict()
+      best_model_wts = net.state_dict()
     
     #early stopping
     early_stopping_counter = 0
