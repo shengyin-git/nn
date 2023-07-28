@@ -153,7 +153,7 @@ class SiameseNetwork(nn.Module):
         output1 = self.resnet(input1)
         output2 = self.resnet(input2)
 
-        output12 = self.cat((output1, output2),1)
+        output12 = torch.cat((output1, output2),1)
         output = self.fn(output12)
         return output
 
