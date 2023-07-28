@@ -118,10 +118,12 @@ transformation = transforms.Compose([transforms.Resize((100,100)),
                                      transforms.ToTensor()
                                     ])
 
-siamese_dataset = SiameseNetworkDataset(file_path=train_,
+train_dataset = SiameseNetworkDataset(file_path=train_,
+                                        transform=transformation)
+val_dataset = SiameseNetworkDataset(file_path=val_,
                                         transform=transformation)
 # Create a simple dataloader just for simple visualization
-vis_dataloader = DataLoader(siamese_dataset,
+vis_dataloader = DataLoader(train_dataset,
                         shuffle=True,
                         num_workers=1,
                         batch_size=8)
@@ -180,7 +182,12 @@ class SiameseNetwork(nn.Module):
         return output
 
 # Load the training dataset
-train_dataloader = DataLoader(siamese_dataset,
+train_dataloader = DataLoader(train_dataset,
+                        shuffle=True,
+                        num_workers=8,
+                        batch_size=64)
+
+val_dataloader = DataLoader(val_dataset,
                         shuffle=True,
                         num_workers=8,
                         batch_size=64)
@@ -196,132 +203,134 @@ loss_fn = BCEWithLogitsLoss() #binary cross entropy with sigmoid, so no need to 
 #optimizer
 optimizer = torch.optim.Adam(net.fc.parameters()) 
 
-
 #######################################################################################
 ## training process 
-counter = []
-loss_history = [] 
-iteration_number= 0
+# counter = []
+# loss_history = [] 
+# iteration_number= 0
 
-# Iterate throught the epochs
-for epoch in range(100):
+# # Iterate throught the epochs
+# for epoch in range(100):
 
-    # Iterate over batches
-    for i, (img0, img1, label) in enumerate(train_dataloader, 0):
+#     # Iterate over batches
+#     for i, (img0, img1, label) in enumerate(train_dataloader, 0):
 
-        # Send the images and labels to CUDA
-        img0, img1, label = img0.to(device), img1.to(device), label.to(device)
+#         # Send the images and labels to CUDA
+#         img0, img1, label = img0.to(device), img1.to(device), label.to(device)
 
-        # Zero the gradients
-        optimizer.zero_grad()
+#         # Zero the gradients
+#         optimizer.zero_grad()
 
-        # Pass in the two images into the network and obtain two outputs
-        output = net(img0, img1)
+#         # Pass in the two images into the network and obtain two outputs
+#         output = net(img0, img1)
 
-        # Pass the outputs of the networks and label into the loss function
-        loss_contrastive = loss_fn(output, label)
+#         # Pass the outputs of the networks and label into the loss function
+#         loss_contrastive = loss_fn(output, label)
 
-        # Calculate the backpropagation
-        loss_contrastive.backward()
+#         # Calculate the backpropagation
+#         loss_contrastive.backward()
 
-        # Optimize
-        optimizer.step()
+#         # Optimize
+#         optimizer.step()
 
-        # Every 10 batches print out the loss
-        if i % 10 == 0 :
-            print(f"Epoch number {epoch}\n Current loss {loss_contrastive.item()}\n")
-            iteration_number += 10
+#         # Every 10 batches print out the loss
+#         if i % 10 == 0 :
+#             print(f"Epoch number {epoch}\n Current loss {loss_contrastive.item()}\n")
+#             iteration_number += 10
 
-            counter.append(iteration_number)
-            loss_history.append(loss_contrastive.item())
+#             counter.append(iteration_number)
+#             loss_history.append(loss_contrastive.item())
 
 # show_plot(counter, loss_history)
 
 ################################################################################################
 
-# def make_train_step(model, optimizer, loss_fn):
-#   def train_step(x,y):
-#     #make prediction
-#     yhat = model(x)
-#     #enter train mode
-#     model.train()
-#     #compute loss
-#     loss = loss_fn(yhat,y)
+def make_train_step(model, optimizer, loss_fn):
+  def train_step(x,y):
+    #make prediction
+    yhat = model(x[0],x[1])
+    #enter train mode
+    model.train()
+    #compute loss
+    loss = loss_fn(yhat,y)
 
-#     loss.backward()
-#     optimizer.step()
-#     optimizer.zero_grad()
-#     #optimizer.cleargrads()
+    loss.backward()
+    optimizer.step()
+    optimizer.zero_grad()
+    #optimizer.cleargrads()
 
-#     return loss
-#   return train_step
+    return loss
+  return train_step
 
-# train_step = make_train_step(model, optimizer, loss_fn)
+train_step = make_train_step(model, optimizer, loss_fn)
 
-# from tqdm import tqdm
+from tqdm import tqdm
 
-# losses = []
-# val_losses = []
+losses = []
+val_losses = []
 
-# epoch_train_losses = []
-# epoch_test_losses = []
+epoch_train_losses = []
+epoch_test_losses = []
 
-# n_epochs = 10
-# early_stopping_tolerance = 3
-# early_stopping_threshold = 0.03
+n_epochs = 10
+early_stopping_tolerance = 3
+early_stopping_threshold = 0.03
 
-# for epoch in range(n_epochs):
-#   epoch_loss = 0
-#   for i ,data in tqdm(enumerate(trainloader), total = len(trainloader)): #iterate ove batches
-#     x_batch , y_batch = data
-#     x_batch = x_batch.to(device) #move to gpu
-#     y_batch = y_batch.unsqueeze(1).float() #convert target to same nn output shape
-#     y_batch = y_batch.to(device) #move to gpu
+for epoch in range(n_epochs):
+  epoch_loss = 0
+  for i ,data in tqdm(enumerate(train_dataloader), total = len(train_dataloader)): #iterate ove batches
+    x1_batch , x2_batch , y_batch = data
+    x1_batch = x1_batch.to(device) #move to gpu
+    x2_batch = x2_batch.to(device)
+    y_batch = y_batch.unsqueeze(1).float() #convert target to same nn output shape
+    y_batch = y_batch.to(device) #move to gpu
 
 
-#     loss = train_step(x_batch, y_batch)
-#     epoch_loss += loss/len(trainloader)
-#     losses.append(loss)
+    loss = train_step((x1_batch,x2_batch), y_batch)
+    epoch_loss += loss/len(trainloader)
+    losses.append(loss)
     
-#   epoch_train_losses.append(epoch_loss)
-#   print('\nEpoch : {}, train loss : {}'.format(epoch+1,epoch_loss))
+  epoch_train_losses.append(epoch_loss)
+  print('\nEpoch : {}, train loss : {}'.format(epoch+1,epoch_loss))
 
-#   #validation doesnt requires gradient
-#   with torch.no_grad():
-#     cum_loss = 0
-#     for x_batch, y_batch in testloader:
-#       x_batch = x_batch.to(device)
-#       y_batch = y_batch.unsqueeze(1).float() #convert target to same nn output shape
-#       y_batch = y_batch.to(device)
+  #validation doesnt requires gradient
+  with torch.no_grad():
+    cum_loss = 0
+    for x_batch, y_batch in train_dataloader:
+      x1_batch , x2_batch , y_batch = data
+      x1_batch = x1_batch.to(device) #move to gpu
+      x2_batch = x2_batch.to(device)
+      y_batch = y_batch.unsqueeze(1).float() #convert target to same nn output shape
+      y_batch = y_batch.to(device) #move to gpu
 
-#       #model to eval mode
-#       model.eval()
+      #model to eval mode
+      model.eval()
 
-#       yhat = model(x_batch)
-#       val_loss = loss_fn(yhat,y_batch)
-#       cum_loss += loss/len(testloader)
-#       val_losses.append(val_loss.item())
+      yhat = model(x1_batch,x2_batch)
+      val_loss = loss_fn(yhat,y_batch)
+      cum_loss += loss/len(train_dataloader)
+      val_losses.append(val_loss.item())
 
 
-#     epoch_test_losses.append(cum_loss)
-#     print('Epoch : {}, val loss : {}'.format(epoch+1,cum_loss))  
+    epoch_test_losses.append(cum_loss)
+    print('Epoch : {}, val loss : {}'.format(epoch+1,cum_loss))  
     
-#     best_loss = min(epoch_test_losses)
+    best_loss = min(epoch_test_losses)
     
-#     #save best model
-#     if cum_loss <= best_loss:
-#       best_model_wts = model.state_dict()
+    #save best model
+    if cum_loss <= best_loss:
+      best_model_wts = model.state_dict()
     
-#     #early stopping
-#     early_stopping_counter = 0
-#     if cum_loss > best_loss:
-#       early_stopping_counter +=1
+    #early stopping
+    early_stopping_counter = 0
+    if cum_loss > best_loss:
+      early_stopping_counter +=1
 
-#     if (early_stopping_counter == early_stopping_tolerance) or (best_loss <= early_stopping_threshold):
-#       print("/nTerminating: early stopping")
-#       break #terminate training
+    if (early_stopping_counter == early_stopping_tolerance) or (best_loss <= early_stopping_threshold):
+      print("/nTerminating: early stopping")
+      break #terminate training
     
-# #load best model
+#load best model
 # model.load_state_dict(best_model_wts)
 
 
