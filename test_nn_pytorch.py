@@ -154,7 +154,7 @@ class SiameseNetwork(nn.Module):
         output2 = self.resnet(input2)
 
         output12 = torch.cat((output1, output2),1)
-        output = self.fn(output12)
+        output = self.fc(output12)
         return output
 
 # Load the training dataset
