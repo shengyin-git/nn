@@ -80,9 +80,6 @@ class SiameseNetworkDataset(Dataset):
 
         self.len_ = min(len(self.cat_files), len(self.dog_files))
 
-        self.num_train = np.int32(self.len*0.8) # 1500
-        self.num_val = len_ - self.num_train # 100  
-
     def __getitem__(self,index):
         rnd_0 = random.choice(self.cat_files)
         img0_ = Image.open(rnd_0)
