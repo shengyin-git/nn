@@ -64,11 +64,9 @@ class SiameseNetworkDataset(Dataset):
                 label_ = 0
                 if rnd_0 != rnd_1:
                     break
-        print(np.shape(img0_))
+                    
         img0 = img0_.convert("L")
         img1 = img1_.convert("L")
-
-        print(np.shape(img0))
 
         if self.transform is not None:
             img0 = self.transform(img0)
