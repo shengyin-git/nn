@@ -82,6 +82,7 @@ class SiameseNetworkDataset(Dataset):
 
     def __getitem__(self,index):
         rnd_0 = random.choice(self.cat_files)
+        print(rnd_0)
         img0_ = Image.open(rnd_0)
 
         #We need to approximately 50% of images to be in the same class
@@ -114,7 +115,7 @@ class SiameseNetworkDataset(Dataset):
 # Resize the images and transform to tensors
 train_, val_, tes_ = split_train_val_tes(file_path='./data/train/*', num_=[1500,150,150])
 # train_, val_, tes_ = split_train_val_tes(file_path='./data/train/*', ratio_=[0.7,0.15,0.15])
-transformation = transforms.Compose([transforms.Resize((500,500)),
+transformation = transforms.Compose([transforms.Resize((100,100)),
                                      transforms.ToTensor()
                                     ])
 
