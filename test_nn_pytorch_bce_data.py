@@ -211,13 +211,18 @@ optimizer = torch.optim.Adam(net.fc.parameters())
 
 #######################################################################################
 ## training process 
-counter = []
-loss_history = [] 
 iteration_number= 0
+valid_loss_min = np.Inf
+val_loss = []
+val_acc = []
+train_loss = []
+train_acc = []
+total_step = len(train_dataloader)
 
 # Iterate throught the epochs
 for epoch in range(10):
     correct = 0
+    total=0
     # Iterate over batches
     for i, (img0, img1, label) in enumerate(train_dataloader, 0):
 
@@ -239,31 +244,65 @@ for epoch in range(10):
         # Optimize
         optimizer.step()
 
+        # Accuracy
+        running_loss += loss_contrastive.item()
+        pred = (torch.sigmoid(output) > 0.5)
+        correct += torch.sum(pred==label).item()
+        total += label.size(0)
+
         # Every 10 batches print out the loss
         if i % 10 == 0 :
             print(f"Epoch number {epoch}\n Current loss {loss_contrastive.item()}\n")
 
+    train_acc.append(100 * correct / total)
+    train_loss.append(running_loss/total_step)
+
+    # validation
+    batch_loss = 0
+    total_t=0
+    correct_t=0
+
+    with torch.no_grad():
+        net.eval()
+        for img0, img1, label in val_dataloader:
+            img0, img1, label = img0.to(device), img1.to(device), label.to(device)
+            output = net(img0, img1)
+            loss_t = loss_fn(output, label)
+            batch_loss += loss_t.item()
+
             pred = (torch.sigmoid(output) > 0.5)
+            correct_t += torch.sum(pred==label).item()
+            total_t += label.size(0)
 
-            print(pred)
+        val_acc.append(100 * correct_t/total_t)
+        val_loss.append(batch_loss/len(val_dataloader))
+        network_learned = batch_loss < valid_loss_min
+        print(f'validation loss: {np.mean(val_loss):.4f}, validation acc: {(100 * correct_t/total_t):.4f}\n')
 
-            correct += torch.sum(pred==label).item()
+        if network_learned:
+            valid_loss_min = batch_loss
+            # torch.save(net.state_dict(), 'resnet.pt')
+            print('Improvement-Detected, save-model')
 
-            print(correct)
+    net.train()        
 
-            # total += target_.size(0)
+fig = plt.figure(figsize=(20,10))
+plt.title("Train-Validation Accuracy")
+plt.plot(train_acc, label='train')
+plt.plot(val_acc, label='validation')
+plt.xlabel('num_epochs', fontsize=12)
+plt.ylabel('accuracy', fontsize=12)
+plt.legend(loc='best')
+plt.savefig('./training_val_accuracy.png')
 
-            # if (i) % 20 == 0:
-
-            # print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}' 
-
-            #        .format(epoch, n_epochs, batch_idx, total_step, loss.item()))
-            iteration_number += 10
-
-            counter.append(iteration_number)
-            loss_history.append(loss_contrastive.item())
-
-show_plot(counter, loss_history)
+fig = plt.figure(figsize=(20,10))
+plt.title("Train-Validation Loss")
+plt.plot(train_loss, label='train')
+plt.plot(val_loss, label='validation')
+plt.xlabel('num_epochs', fontsize=12)
+plt.ylabel('loss', fontsize=12)
+plt.legend(loc='best')
+plt.savefig('./training_val_loss.png')
 
 ################################################################################################
 # def make_train_step(model, optimizer, loss_fn):
@@ -360,21 +399,27 @@ tes_dataloader = DataLoader(val_dataset,
                         batch_size=8)
 
 with torch.no_grad():
+    net.eval()
+    for img0, img1, label in tes_dataloader:
+      img0, img1, label = img0.to(device), img1.to(device), label.to(device)
 
-    for x1_batch , x2_batch, y_batch in tes_dataloader:
-      x1_batch = x1_batch.to(device)
-      x2_batch = x2_batch.to(device)
-    #   y_batch = y_batch.unsqueeze(1).float() #convert target to same nn output shape
-      y_batch = y_batch.to(device) #move to gpu
+      output = net(img0, img1)
+      loss_t = loss_fn(output, label)
+      batch_loss += loss_t.item()
 
-      #model to eval mode
-      net.eval()
+      pred = (torch.sigmoid(output) > 0.5)
+      correct_t += torch.sum(pred==label).item()
+      total_t += label.size(0)
 
-      yhat = net(x1_batch,x2_batch)
-      yhat_ = torch.sigmoid(yhat)
-      print(yhat.cpu().numpy().reshape(-1))
-      print(yhat_.cpu().numpy().reshape(-1))
-      print(y_batch.cpu().numpy().reshape(-1)) 
+      output_ = torch.sigmoid(output)
+      print(output.cpu().numpy().reshape(-1))
+      print(output_.cpu().numpy().reshape(-1))
+      print(label.cpu().numpy().reshape(-1)) 
+
+    tes_acc = 100 * correct_t/total_t
+    tes_loss = batch_loss/len(tes_dataloader)
+    print(f'test loss: {np.mean(tes_loss):.4f}, test acc: {tes_acc:.4f}\n')
+
 
 
 
