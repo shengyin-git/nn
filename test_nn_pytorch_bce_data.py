@@ -115,7 +115,7 @@ class SiameseNetworkDataset(Dataset):
 # Load the training dataset
 # Resize the images and transform to tensors
 # train_, val_, tes_ = split_train_val_tes(file_path='./data/pile_imgs/*', num_=[1500,150,150])
-train_, val_, tes_ = split_train_val_tes(file_path='./data/train/*', ratio_=[0.7,0.15,0.15])
+train_, val_, tes_ = split_train_val_tes(file_path='./data/pile_imgs/*', ratio_=[0.7,0.15,0.15])
 
 transformation = transforms.Compose([transforms.Resize((224,224)),
                                      transforms.ToTensor()
