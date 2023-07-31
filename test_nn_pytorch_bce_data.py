@@ -20,6 +20,7 @@ from torch import optim
 import torch.nn.functional as F
 
 import glob
+import copy
 
 # Showing images
 def imshow(img, text=None):
@@ -38,10 +39,8 @@ def show_plot(iteration,loss):
     plt.show()
 
 def split_train_val_tes(file_path, num_ = None, ratio_=None):
-    files = glob.glob(file_path)
-    cat_files = [fn for fn in files if 'cat' in fn]
-    dog_files = [fn for fn in files if 'dog' in fn]
-    len_ = min(len(cat_files), len(dog_files))
+    pile_files = glob.glob(file_path)
+    len_ = len(pile_files)
 
     if num_ is not None:
         num_train, num_val, num_tes = num_
@@ -50,24 +49,35 @@ def split_train_val_tes(file_path, num_ = None, ratio_=None):
         num_val = min(np.int32(len_*ratio_[1]), len_-num_train)
         num_tes = min(np.int32(len_*ratio_[2]), len_-num_train-num_val)
 
-    cat_train = np.random.choice(cat_files, size=num_train, replace=False)
-    dog_train = np.random.choice(dog_files, size=num_train, replace=False)
+    pile_train = np.random.choice(pile_files, size=num_train, replace=False)    
+    # mask_train = copy.deepcopy(pile_train)
+    # label_train = copy.deepcopy(pile_train)
+    # for i in range(num_train):
+    #     mask_train[i] = np.char.replace(mask_train[i], 'pile_imgs', 'mask_imgs')
+    #     label_train[i] = np.char.replace(mask_train[i], 'pile_imgs', 'labels')
+    #     label_train[i] = np.char.replace(mask_train[i], 'jpg', 'npy')
 
-    cat_files = list(set(cat_files)-set(cat_train))
-    dog_files = list(set(dog_files)-set(dog_train))
+    pile_files = list(set(pile_files)-set(pile_train))
+    pile_val = np.random.choice(pile_files, size=num_val, replace=False)
+    # mask_val = copy.deepcopy(pile_val)
+    # label_val = copy.deepcopy(pile_val)
+    # for i in range(num_val):
+    #     mask_val[i] = np.char.replace(mask_val[i], 'pile_imgs', 'mask_imgs')
+    #     label_val[i] = np.char.replace(mask_val[i], 'pile_imgs', 'labels')
+    #     label_val[i] = np.char.replace(mask_val[i], 'jpg', 'npy')
 
-    cat_val = np.random.choice(cat_files, size=num_val, replace=False)
-    dog_val = np.random.choice(dog_files, size=num_val, replace=False)
+    pile_files = list(set(pile_files)-set(pile_val))
+    pile_tes = np.random.choice(pile_files, size=num_tes, replace=False)
+    # mask_tes = copy.deepcopy(pile_tes)
+    # label_tes = copy.deepcopy(pile_tes)
+    # for i in range(num_tes):
+    #     mask_tes[i] = np.char.replace(mask_tes[i], 'pile_imgs', 'mask_imgs')
+    #     label_tes[i] = np.char.replace(mask_tes[i], 'pile_imgs', 'labels')
+    #     label_tes[i] = np.char.replace(mask_tes[i], 'jpg', 'npy')
 
-    cat_files = list(set(cat_files)-set(cat_val))
-    dog_files = list(set(dog_files)-set(cat_val))
-
-    cat_tes = np.random.choice(cat_files, size=num_tes, replace=False)
-    dog_tes = np.random.choice(dog_files, size=num_tes, replace=False)
-
-    train_ = [cat_train,dog_train]
-    val_ = [cat_val,dog_val]
-    tes_ = [cat_tes,dog_tes]
+    train_ = pile_train
+    val_ = pile_val
+    tes_ = pile_tes
 
     return train_, val_, tes_
 
@@ -75,47 +85,39 @@ class SiameseNetworkDataset(Dataset):
     def __init__(self,file_path,transform=None):
         self.transform = transform
 
-        self.cat_files = file_path[0]
-        self.dog_files = file_path[1]
+        self.pile_files = file_path
+        # self.mask_files = file_path[1]
+        # self.label_path = label_path
 
-        self.len_ = min(len(self.cat_files), len(self.dog_files))
+        self.len_ = len(self.pile_files)
 
     def __getitem__(self,index):
-        rnd_0 = random.choice(self.cat_files)
-        print(rnd_0)
-        img0_ = Image.open(rnd_0)
+        rnd_pile = random.choice(self.pile_files)
+        img_pile = Image.open(rnd_pile)
 
-        #We need to approximately 50% of images to be in the same class
-        should_get_diff_class = random.randint(0,1) 
-        if should_get_diff_class:                
-            rnd_1 = random.choice(self.dog_files)
-            img1_ = Image.open(rnd_1)
-            label_ = 1
-        else:
-            while True:
-                rnd_1 = random.choice(self.cat_files)
-                img1_ = Image.open(rnd_1)
-                label_ = 0
-                if rnd_0 != rnd_1:
-                    break
+        rnd_mask = np.char.replace(rnd_pile, 'pile_imgs', 'mask_imgs')
+        img_mask = Image.open(str(rnd_mask))
 
-        img0 = img0_ # img0 = img0_.convert("L")
-        img1 = img1_ # img1 = img1_.convert("L")
+        rnd_label = np.char.replace(rnd_pile, 'pile_imgs', 'labels')
+        rnd_label = np.char.replace(rnd_label, 'jpg', 'npy')
+        label_ = np.load(str(rnd_label))
 
         if self.transform is not None:
-            img0 = self.transform(img0)
-            img1 = self.transform(img1)
-        
-        return img0, img1, torch.from_numpy(np.array([int(label_)], dtype=np.float32))
+            img_pile = self.transform(img_pile)
+            img_mask = self.transform(img_mask)
+
+        # return img_pile, img_mask, torch.from_numpy(label_, dtype=np.float32)
+        return img_pile, img_mask, torch.from_numpy(np.array([int(label_)], dtype=np.float32))
 
     def __len__(self):
         return self.len_
 
 # Load the training dataset
 # Resize the images and transform to tensors
-train_, val_, tes_ = split_train_val_tes(file_path='./data/train/*', num_=[1500,150,150])
+train_, val_, tes_ = split_train_val_tes(file_path='./data/pile_imgs/*', num_=[1500,150,150])
 # train_, val_, tes_ = split_train_val_tes(file_path='./data/train/*', ratio_=[0.7,0.15,0.15])
-transformation = transforms.Compose([transforms.Resize((100,100)),
+
+transformation = transforms.Compose([transforms.Resize((224,224)),
                                      transforms.ToTensor()
                                     ])
 
