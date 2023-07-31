@@ -250,7 +250,7 @@ for epoch in range(10):
             if pred > 0.5:
               pred_ = 1
             else:
-              pred _ = 0
+              pred_ = 0
 
             # correct += torch.sum(pred==target_).item()
 
