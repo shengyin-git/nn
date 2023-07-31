@@ -216,7 +216,7 @@ loss_history = []
 iteration_number= 0
 
 # Iterate throught the epochs
-for epoch in range(100):
+for epoch in range(10):
 
     # Iterate over batches
     for i, (img0, img1, label) in enumerate(train_dataloader, 0):
@@ -242,6 +242,25 @@ for epoch in range(100):
         # Every 10 batches print out the loss
         if i % 10 == 0 :
             print(f"Epoch number {epoch}\n Current loss {loss_contrastive.item()}\n")
+
+            _,pred = torch.sigmoid(output, dim=1)
+
+            print(pred)
+
+            if pred > 0.5:
+              pred_ = 1
+            else:
+              pred _ = 0
+
+            # correct += torch.sum(pred==target_).item()
+
+            # total += target_.size(0)
+
+            # if (i) % 20 == 0:
+
+            # print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}' 
+
+            #        .format(epoch, n_epochs, batch_idx, total_step, loss.item()))
             iteration_number += 10
 
             counter.append(iteration_number)
