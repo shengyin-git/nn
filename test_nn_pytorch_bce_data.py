@@ -221,6 +221,7 @@ total_step = len(train_dataloader)
 
 # Iterate throught the epochs
 for epoch in range(10):
+    running_loss = 0.0
     correct = 0
     total=0
     # Iterate over batches
