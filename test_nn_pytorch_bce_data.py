@@ -220,7 +220,7 @@ train_acc = []
 total_step = len(train_dataloader)
 
 # Iterate throught the epochs
-for epoch in range(10):
+for epoch in range(100):
     running_loss = 0.0
     correct = 0
     total=0
@@ -413,7 +413,7 @@ with torch.no_grad():
       total_t += label.size(0)
 
       output_ = torch.sigmoid(output)
-      print(output.cpu().numpy().reshape(-1))
+      # print(output.cpu().numpy().reshape(-1))
       print(output_.cpu().numpy().reshape(-1))
       print(label.cpu().numpy().reshape(-1)) 
 

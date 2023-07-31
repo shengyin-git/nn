@@ -1,10 +1,7 @@
-This is an example neural network implementation for image comparison between cats and dogs.
-Dataset can be accessed from https://www.kaggle.com/c/dogs-vs-cats/data.
+process_data_mask.py is used to get the masked image, transform the picking position to the center, rotate to the picking angle, and cut to a pre-defined size.
 
-The inputs include two images, if both cats the label is 0, if both dogs the label is 0, if different the label is 1.
+copy process_data_mask.py to the method_random_full directory and run "python process_data_mask.py" to get the data set for training.
 
-This setting up is similar to what we want to do.
+move the generated dataset and replace the data dir.
 
-Our inputs include one image of masked items of one specific pile, and a mask image of the item of interest (triple the mask to make it compatible with resnet50 (like an rgb image))
-
-The rotation and translation function are also included. 
+run "python test_nn_pytorch_bce_data" to train the neural network. 
