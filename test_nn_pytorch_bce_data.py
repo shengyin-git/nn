@@ -216,7 +216,7 @@ loss_history = []
 iteration_number= 0
 
 # Iterate throught the epochs
-for epoch in range(1):
+for epoch in range(100):
 
     # Iterate over batches
     for i, (img0, img1, label) in enumerate(train_dataloader, 0):
