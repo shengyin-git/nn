@@ -245,7 +245,7 @@ for epoch in range(10):
 
             pred = torch.sigmoid(output)
 
-            print(pred.cpu().numpy().reshape(-1))
+            print(pred)
 
             if pred > 0.5:
               pred_ = 1
