@@ -243,16 +243,13 @@ for epoch in range(10):
         if i % 10 == 0 :
             print(f"Epoch number {epoch}\n Current loss {loss_contrastive.item()}\n")
 
-            pred = torch.sigmoid(output)
+            pred = (torch.sigmoid(output) > 0.5)
 
             print(pred)
 
-            if pred > 0.5:
-              pred_ = 1
-            else:
-              pred_ = 0
+            correct += torch.sum(pred==label).item()
 
-            # correct += torch.sum(pred==target_).item()
+            print(correct)
 
             # total += target_.size(0)
 
