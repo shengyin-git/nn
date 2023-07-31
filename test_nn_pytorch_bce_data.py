@@ -243,9 +243,9 @@ for epoch in range(10):
         if i % 10 == 0 :
             print(f"Epoch number {epoch}\n Current loss {loss_contrastive.item()}\n")
 
-            _,pred = torch.sigmoid(output, dim=1)
+            pred = torch.sigmoid(output)
 
-            print(pred)
+            print(pred.cpu().numpy().reshape(-1))
 
             if pred > 0.5:
               pred_ = 1
