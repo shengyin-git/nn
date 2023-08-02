@@ -220,7 +220,7 @@ train_acc = []
 total_step = len(train_dataloader)
 
 # Iterate throught the epochs
-for epoch in range(500):
+for epoch in range(100):
     running_loss = 0.0
     correct = 0
     total=0
@@ -294,7 +294,7 @@ plt.plot(val_acc, label='validation')
 plt.xlabel('num_epochs', fontsize=12)
 plt.ylabel('accuracy', fontsize=12)
 plt.legend(loc='best')
-plt.savefig('./data_224/training_val_accuracy.png')
+plt.savefig('./training_val_accuracy.png')
 
 fig = plt.figure(figsize=(20,10))
 plt.title("Train-Validation Loss")
@@ -303,7 +303,7 @@ plt.plot(val_loss, label='validation')
 plt.xlabel('num_epochs', fontsize=12)
 plt.ylabel('loss', fontsize=12)
 plt.legend(loc='best')
-plt.savefig('./data_224/training_val_loss.png')
+plt.savefig('./training_val_loss.png')
 
 ################################################################################################
 # def make_train_step(model, optimizer, loss_fn):
