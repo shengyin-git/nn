@@ -200,7 +200,10 @@ val_dataloader = DataLoader(val_dataset,
 from torch.nn.modules.loss import BCEWithLogitsLoss
 from torch.optim import lr_scheduler
 
-net = SiameseNetwork().to(device)# to(device) cuda()
+net = SiameseNetwork()
+print(net)
+net = net.to(device)# to(device) cuda()
+
 
 #loss
 loss_fn = BCEWithLogitsLoss() #binary cross entropy with sigmoid, so no need to use sigmoid in the model
