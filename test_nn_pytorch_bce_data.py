@@ -172,7 +172,10 @@ class SiameseNetwork(nn.Module):
             nn.Linear(num_ftrs_resnet*2, 1024),
             nn.ReLU(inplace=True),
             
-            nn.Linear(1024, 256),
+            nn.Linear(1024, 512),
+            nn.ReLU(inplace=True),
+
+            nn.Linear(512, 256),
             nn.ReLU(inplace=True),
             
             nn.Linear(256,1)
@@ -220,7 +223,7 @@ train_acc = []
 total_step = len(train_dataloader)
 
 # Iterate throught the epochs
-for epoch in range(500):
+for epoch in range(50):
     running_loss = 0.0
     correct = 0
     total=0
