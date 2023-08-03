@@ -55,9 +55,9 @@ def split_train_val_tes(file_path, num_ = None, ratio_=None):
     dog_train = np.random.choice(dog_files, size=num_train, replace=False)
 
     cat_files = list(set(cat_files)-set(cat_train))
-    dog_files = list(set(dog_files)-set(dog_train))
+    dog_files = list(set(dog_train)-set(dog_train))
 
-    cat_val = np.random.choice(cat_files, size=num_val, replace=False)
+    cat_val = np.random.choice(cat_train, size=num_val, replace=False)
     dog_val = np.random.choice(dog_files, size=num_val, replace=False)
 
     cat_files = list(set(cat_files)-set(cat_val))
@@ -276,6 +276,8 @@ for epoch in range(50):
             pred = (torch.sigmoid(output) > 0.5)
             correct_t += torch.sum(pred==label).item()
             total_t += label.size(0)
+
+            print(loss_t.item())
 
         val_acc.append(100 * correct_t/total_t)
         val_loss.append(batch_loss/len(val_dataloader))
