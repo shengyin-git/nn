@@ -21,7 +21,6 @@ import torch.nn.functional as F
 
 import glob
 import copy
-import time
 
 # Showing images
 def imshow(img, text=None):
@@ -171,13 +170,12 @@ class SiameseNetwork(nn.Module):
         # # Setting up the Fully Connected Layers
         self.fc = nn.Sequential(
             nn.Linear(num_ftrs_resnet*2, 1024),
-            nn.ReLU(), #inplace=True
-            nn.Dropout(p=0.3),
+            nn.ReLU(inplace=True),
             
-            # nn.Linear(1024, 256),
-            # nn.ReLU(inplace=True),
+            nn.Linear(1024, 256),
+            nn.ReLU(inplace=True),
             
-            nn.Linear(1024,1)
+            nn.Linear(256,1)
         )
 
     def forward(self, input1, input2):
@@ -222,7 +220,7 @@ train_acc = []
 total_step = len(train_dataloader)
 
 # Iterate throught the epochs
-for epoch in range(50):
+for epoch in range(500):
     running_loss = 0.0
     correct = 0
     total=0
@@ -289,7 +287,6 @@ for epoch in range(50):
 
     net.train()        
 
-ts = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
 fig = plt.figure(figsize=(20,10))
 plt.title("Train-Validation Accuracy")
 plt.plot(train_acc, label='train')
@@ -297,7 +294,7 @@ plt.plot(val_acc, label='validation')
 plt.xlabel('num_epochs', fontsize=12)
 plt.ylabel('accuracy', fontsize=12)
 plt.legend(loc='best')
-plt.savefig('./results/training_val_accuracy' + str(ts) + '.png')
+plt.savefig('./data_224/training_val_accuracy.png')
 
 fig = plt.figure(figsize=(20,10))
 plt.title("Train-Validation Loss")
@@ -306,7 +303,7 @@ plt.plot(val_loss, label='validation')
 plt.xlabel('num_epochs', fontsize=12)
 plt.ylabel('loss', fontsize=12)
 plt.legend(loc='best')
-plt.savefig('./results/training_val_loss' + str(ts) + '.png')
+plt.savefig('./data_224/training_val_loss.png')
 
 ################################################################################################
 # def make_train_step(model, optimizer, loss_fn):
