@@ -222,7 +222,7 @@ train_acc = []
 total_step = len(train_dataloader)
 
 # Iterate throught the epochs
-for epoch in range(500):
+for epoch in range(50):
     running_loss = 0.0
     correct = 0
     total=0
@@ -255,7 +255,7 @@ for epoch in range(500):
 
         # Every 10 batches print out the loss
         if i % 10 == 0 :
-            print(f"Epoch number {epoch}\n Current loss {loss_contrastive.item()}\n")
+            print(f"Epoch number {epoch}\n Current loss {loss_contrastive.item()} and accuracy {(100 * correct / total)}\n")
 
     train_acc.append(100 * correct / total)
     train_loss.append(running_loss/total_step)

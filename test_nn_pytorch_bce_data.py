@@ -59,7 +59,7 @@ def split_train_val_tes(file_path, num_ = None, ratio_=None):
     #     label_train[i] = np.char.replace(mask_train[i], 'jpg', 'npy')
 
     pile_files = list(set(pile_files)-set(pile_train))
-    pile_val = np.random.choice(pile_files, size=num_val, replace=False)
+    pile_val = np.random.choice(pile_train, size=num_val, replace=False)
     # mask_val = copy.deepcopy(pile_val)
     # label_val = copy.deepcopy(pile_val)
     # for i in range(num_val):
@@ -258,7 +258,7 @@ for epoch in range(50):
 
         # Every 10 batches print out the loss
         if i % 10 == 0 :
-            print(f"Epoch number {epoch}\n Current loss {loss_contrastive.item()}\n")
+            print(f"Epoch number {epoch}\n Current loss {loss_contrastive.item()} and accuracy {(100 * correct / total)}\n")
 
     train_acc.append(100 * correct / total)
     train_loss.append(running_loss/total_step)
