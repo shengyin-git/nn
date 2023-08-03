@@ -58,7 +58,7 @@ def split_train_val_tes(file_path, num_ = None, ratio_=None):
     dog_files = list(set(dog_train)-set(dog_train))
 
     cat_val = np.random.choice(cat_train, size=num_val, replace=False)
-    dog_val = np.random.choice(dog_files, size=num_val, replace=False)
+    dog_val = np.random.choice(dog_train, size=num_val, replace=False)
 
     cat_files = list(set(cat_files)-set(cat_val))
     dog_files = list(set(dog_files)-set(cat_val))
