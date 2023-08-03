@@ -174,16 +174,11 @@ class SiameseNetwork(nn.Module):
             nn.ReLU(), #inplace=True
             nn.Dropout(p=0.3),
             
-<<<<<<< HEAD
-            nn.Linear(1024, 512),
-            nn.ReLU(inplace=True),
-
-            nn.Linear(512, 256),
-            nn.ReLU(inplace=True),
-=======
-            # nn.Linear(1024, 256),
+            # nn.Linear(1024, 512),
             # nn.ReLU(inplace=True),
->>>>>>> c80f92a3546ed0dd59822fe4e4934c66069f07bf
+
+            # nn.Linear(512, 256),
+            # nn.ReLU(inplace=True),
             
             nn.Linear(1024,1)
         )
