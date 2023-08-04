@@ -55,10 +55,10 @@ def split_train_val_tes(file_path, num_ = None, ratio_=None):
     dog_train = np.random.choice(dog_files, size=num_train, replace=False)
 
     cat_files = list(set(cat_files)-set(cat_train))
-    dog_files = list(set(dog_train)-set(dog_train))
+    dog_files = list(set(dog_files)-set(dog_train))
 
-    cat_val = np.random.choice(cat_train, size=num_val, replace=False)
-    dog_val = np.random.choice(dog_train, size=num_val, replace=False)
+    cat_val = np.random.choice(cat_files, size=num_val, replace=False)
+    dog_val = np.random.choice(dog_files, size=num_val, replace=False)
 
     cat_files = list(set(cat_files)-set(cat_val))
     dog_files = list(set(dog_files)-set(cat_val))
@@ -81,7 +81,26 @@ class SiameseNetworkDataset(Dataset):
 
         self.len_ = min(len(self.cat_files), len(self.dog_files))
 
+        self.indexes = np.arange(self.len_)
+
     def __getitem__(self,index):
+
+        # rnd_0 = random.choice(self.indexes)
+        # img0_ = Image.open(self.cat_files[rnd_0])
+
+        # should_get_diff_class = random.randint(0,1) 
+        # if should_get_diff_class:                
+        #     img1_ = Image.open(self.dog_files[rnd_0])
+        #     label_ = 1
+        # elif rnd_0 == self.len_ - 1:
+        #     rnd_1 = 0
+        #     img1_ = Image.open(self.cat_files[rnd_1])
+        #     label_ = 0
+        # else:
+        #     rnd_1 = rnd_0 + 1
+        #     img1_ = Image.open(self.cat_files[rnd_1])
+        #     label_ = 0
+
         rnd_0 = random.choice(self.cat_files)
         img0_ = Image.open(rnd_0)
 
@@ -114,7 +133,8 @@ class SiameseNetworkDataset(Dataset):
 # Load the training dataset
 # Resize the images and transform to tensors
 # train_, val_, tes_ = split_train_val_tes(file_path='./data/train/*', num_=[1500,150,150])
-train_, val_, tes_ = split_train_val_tes(file_path='./data/train/*', ratio_=[0.7,0.15,0.15])
+train_, val_, tes_ = split_train_val_tes(file_path='./data/train/*', ratio_=[0.7,0.2,0.1])
+
 transformation = transforms.Compose([transforms.Resize((100,100)),
                                      transforms.ToTensor()
                                     ])
@@ -166,16 +186,18 @@ class SiameseNetwork(nn.Module):
         self.resnet.fc = nn.Flatten() # Identity()
 
         # # Setting up the Fully Connected Layers
-        self.fc = nn.Sequential(
-            nn.Linear(num_ftrs_resnet*2, 1024),
-            nn.ReLU(), #inplace=True
-            nn.Dropout(p=0.3),
+        # self.fc = nn.Sequential(
+        #     nn.Linear(num_ftrs_resnet*2, 1024),
+        #     nn.ReLU(), #inplace=True
+        #     nn.Dropout(p=0.3),
             
-            # nn.Linear(1024, 256),
-            # nn.ReLU(inplace=True),
+        #     # nn.Linear(1024, 256),
+        #     # nn.ReLU(inplace=True),
             
-            nn.Linear(1024,1)
-        )
+        #     nn.Linear(1024,1)
+        # )
+
+        self.fc = nn.Linear(num_ftrs_resnet*2, 1)
 
     def forward(self, input1, input2):
         # In this function we pass in both images and obtain both vectors which are returned
@@ -190,12 +212,12 @@ class SiameseNetwork(nn.Module):
 train_dataloader = DataLoader(train_dataset,
                         shuffle=True,
                         num_workers=8,
-                        batch_size=64)
+                        batch_size=256)
 
 val_dataloader = DataLoader(val_dataset,
                         shuffle=True,
                         num_workers=8,
-                        batch_size=64)
+                        batch_size=256)
 
 from torch.nn.modules.loss import BCEWithLogitsLoss
 from torch.optim import lr_scheduler
@@ -259,7 +281,7 @@ for epoch in range(50):
 
     train_acc.append(100 * correct / total)
     train_loss.append(running_loss/total_step)
-
+    print(f'Training loss: {np.mean(train_loss):.4f}, training acc: {(100 * correct/total):.4f}\n')
     # validation
     batch_loss = 0
     total_t=0
@@ -277,7 +299,7 @@ for epoch in range(50):
             correct_t += torch.sum(pred==label).item()
             total_t += label.size(0)
 
-            print(loss_t.item())
+            # print(loss_t.item())
 
         val_acc.append(100 * correct_t/total_t)
         val_loss.append(batch_loss/len(val_dataloader))
