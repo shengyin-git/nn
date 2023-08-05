@@ -244,7 +244,7 @@ train_acc = []
 total_step = len(train_dataloader)
 
 # Iterate throught the epochs
-for epoch in range(50):
+for epoch in range(500):
     running_loss = 0.0
     correct = 0
     total=0
