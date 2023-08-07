@@ -7,7 +7,7 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 import torchvision
 from torchvision import models
-from torchvision.models import ResNet50_Weights
+from torchvision.models import ResNet50_Weights, ResNet101_Weights, ResNet152_Weights
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 import torchvision.utils
@@ -59,7 +59,7 @@ def split_train_val_tes(file_path, num_ = None, ratio_=None):
     #     label_train[i] = np.char.replace(mask_train[i], 'jpg', 'npy')
 
     pile_files = list(set(pile_files)-set(pile_train))
-    pile_val = np.random.choice(pile_train, size=num_val, replace=False)
+    pile_val = np.random.choice(pile_files, size=num_val, replace=False)
     # mask_val = copy.deepcopy(pile_val)
     # label_val = copy.deepcopy(pile_val)
     # for i in range(num_val):
@@ -116,11 +116,10 @@ class SiameseNetworkDataset(Dataset):
 # Load the training dataset
 # Resize the images and transform to tensors
 # train_, val_, tes_ = split_train_val_tes(file_path='./data_224/pile_imgs/*', num_=[1500,150,150])
-train_, val_, tes_ = split_train_val_tes(file_path='./data_224/pile_imgs/*', ratio_=[0.7,0.15,0.15])
+train_, val_, tes_ = split_train_val_tes(file_path='./data_224/pile_imgs/*', ratio_=[0.7,0.2,0.1])
 
 transformation = transforms.Compose([transforms.Resize((224,224)),
-                                     transforms.ToTensor()
-                                    ])
+                                     transforms.ToTensor()])
 
 train_dataset = SiameseNetworkDataset(file_path=train_,
                                         transform=transformation)
@@ -143,7 +142,7 @@ example_batch = next(iter(vis_dataloader))
 concatenated = torch.cat((example_batch[0], example_batch[1]),0)
 
 # imshow(torchvision.utils.make_grid(concatenated))
-print(example_batch[2].numpy().reshape(-1)) 
+# print(example_batch[2].numpy().reshape(-1)) 
 
 #create the Siamese Neural Network
 device = "cuda" if torch.cuda.is_available() else "cpu" # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -160,7 +159,10 @@ class SiameseNetwork(nn.Module):
         super(SiameseNetwork, self).__init__()
 
         # Setting up the Sequential of CNN Layers
-        self.resnet = models.resnet50(weights=ResNet50_Weights.DEFAULT) #.to(device)
+        # self.resnet = models.resnet50(weights=ResNet50_Weights.DEFAULT) #.to(device)
+        self.resnet = models.resnet101(weights=ResNet101_Weights.DEFAULT) 
+        # self.resnet = models.resnet152(weights=ResNet152_Weights.DEFAULT) 
+       
         for param in self.resnet.parameters():
             param.requires_grad = False
 
@@ -170,17 +172,17 @@ class SiameseNetwork(nn.Module):
 
         # # Setting up the Fully Connected Layers
         self.fc = nn.Sequential(
-            nn.Linear(num_ftrs_resnet*2, 1024),
-            nn.ReLU(), #inplace=True
-            nn.Dropout(p=0.3),
+            nn.Linear(num_ftrs_resnet*2, 1),
+            # nn.ReLU(), #inplace=True
+            # nn.Dropout(p=0.3),
             
-            # nn.Linear(1024, 512),
-            # nn.ReLU(inplace=True),
+            # # nn.Linear(1024, 512),
+            # # nn.ReLU(inplace=True),
 
-            # nn.Linear(512, 256),
-            # nn.ReLU(inplace=True),
+            # # nn.Linear(512, 256),
+            # # nn.ReLU(inplace=True),
             
-            nn.Linear(1024,1)
+            # nn.Linear(1024,1)
         )
 
     def forward(self, input1, input2):
@@ -195,13 +197,13 @@ class SiameseNetwork(nn.Module):
 # Load the training dataset
 train_dataloader = DataLoader(train_dataset,
                         shuffle=True,
-                        num_workers=8,
-                        batch_size=64)
+                        num_workers=16,
+                        batch_size=16)
 
 val_dataloader = DataLoader(val_dataset,
                         shuffle=True,
-                        num_workers=8,
-                        batch_size=64)
+                        num_workers=16,
+                        batch_size=16)
 
 from torch.nn.modules.loss import BCEWithLogitsLoss
 from torch.optim import lr_scheduler
@@ -212,7 +214,7 @@ net = SiameseNetwork().to(device)# to(device) cuda()
 loss_fn = BCEWithLogitsLoss() #binary cross entropy with sigmoid, so no need to use sigmoid in the model
 
 #optimizer
-optimizer = torch.optim.Adam(net.fc.parameters()) 
+optimizer = torch.optim.Adam(net.fc.parameters(), lr = 1e-5) 
 
 #######################################################################################
 ## training process 
@@ -225,12 +227,14 @@ train_acc = []
 total_step = len(train_dataloader)
 
 # Iterate throught the epochs
-for epoch in range(50):
+for epoch in range(500):
     running_loss = 0.0
     correct = 0
     total=0
+    correct_ = 0
     # Iterate over batches
     for i, (img0, img1, label) in enumerate(train_dataloader, 0):
+        net.train() 
 
         # Send the images and labels to CUDA
         img0, img1, label = img0.to(device), img1.to(device), label.to(device)
@@ -260,9 +264,18 @@ for epoch in range(50):
         if i % 10 == 0 :
             print(f"Epoch number {epoch}\n Current loss {loss_contrastive.item()} and accuracy {(100 * correct / total)}\n")
 
+        net.eval()
+        output = net(img0, img1)
+        loss_t = loss_fn(output, label)
+        pred = (torch.sigmoid(output) > 0.5)
+        correct_ += torch.sum(pred==label).item()
+
+        if i % 10 == 0 :
+            print(f"Epoch number {epoch}\n Current val loss {loss_t.item()} and accuracy {(100 * correct_ / total)}\n")       
+
     train_acc.append(100 * correct / total)
     train_loss.append(running_loss/total_step)
-
+    print(f'Training loss: {np.mean(train_loss):.4f}, training acc: {(100 * correct/total):.4f}\n')
     # validation
     batch_loss = 0
     total_t=0
@@ -407,6 +420,9 @@ tes_dataloader = DataLoader(val_dataset,
 
 with torch.no_grad():
     net.eval()
+    correct_t = 0
+    total_t = 0
+    batch_loss = 0 
     for img0, img1, label in tes_dataloader:
       img0, img1, label = img0.to(device), img1.to(device), label.to(device)
 
@@ -420,8 +436,8 @@ with torch.no_grad():
 
       output_ = torch.sigmoid(output)
       # print(output.cpu().numpy().reshape(-1))
-      print(output_.cpu().numpy().reshape(-1))
-      print(label.cpu().numpy().reshape(-1)) 
+    #   print(output_.cpu().numpy().reshape(-1))
+    #   print(label.cpu().numpy().reshape(-1)) 
 
     tes_acc = 100 * correct_t/total_t
     tes_loss = batch_loss/len(tes_dataloader)

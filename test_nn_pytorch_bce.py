@@ -212,12 +212,12 @@ class SiameseNetwork(nn.Module):
 train_dataloader = DataLoader(train_dataset,
                         shuffle=True,
                         num_workers=16,
-                        batch_size=64)
+                        batch_size=32)
 
 val_dataloader = DataLoader(val_dataset,
                         shuffle=True,
                         num_workers=16,
-                        batch_size=64)
+                        batch_size=32)
 
 from torch.nn.modules.loss import BCEWithLogitsLoss
 from torch.optim import lr_scheduler
@@ -247,10 +247,10 @@ for epoch in range(500):
     running_loss = 0.0
     correct = 0
     total=0
-    correct_ = 0
+    # correct_ = 0
     # Iterate over batches
     for i, (img0, img1, label) in enumerate(train_dataloader, 0):
-        net.train() 
+        # net.train() 
 
         # Send the images and labels to CUDA
         img0, img1, label = img0.to(device), img1.to(device), label.to(device)
@@ -280,14 +280,14 @@ for epoch in range(500):
         if i % 10 == 0 :
             print(f"Epoch number {epoch}\n Current loss {loss_contrastive.item()} and accuracy {(100 * correct / total)}\n")
 
-        net.eval()
-        output = net(img0, img1)
-        loss_t = loss_fn(output, label)
-        pred = (torch.sigmoid(output) > 0.5)
-        correct_ += torch.sum(pred==label).item()
+        # net.eval()
+        # output = net(img0, img1)
+        # loss_t = loss_fn(output, label)
+        # pred = (torch.sigmoid(output) > 0.5)
+        # correct_ += torch.sum(pred==label).item()
 
-        if i % 10 == 0 :
-            print(f"Epoch number {epoch}\n Current val loss {loss_contrastive.item()} and accuracy {(100 * correct_ / total)}\n")        
+        # if i % 10 == 0 :
+        #     print(f"Epoch number {epoch}\n Current val loss {loss_t.item()} and accuracy {(100 * correct_ / total)}\n")        
 
     train_acc.append(100 * correct / total)
     train_loss.append(running_loss/total_step)
@@ -437,7 +437,8 @@ tes_dataloader = DataLoader(val_dataset,
                         batch_size=8)
 
 with torch.no_grad():
-
+    correct_t = 0
+    total_t = 0
     for x1_batch , x2_batch, y_batch in tes_dataloader:
       x1_batch = x1_batch.to(device)
       x2_batch = x2_batch.to(device)
@@ -449,12 +450,14 @@ with torch.no_grad():
 
       yhat = net(x1_batch,x2_batch)
       yhat_ = torch.sigmoid(yhat)
-      print(yhat_.cpu().numpy().reshape(-1))
-      print(y_batch.cpu().numpy().reshape(-1)) 
+    #   print(yhat_.cpu().numpy().reshape(-1))
+    #   print(y_batch.cpu().numpy().reshape(-1)) 
 
+      pred = (yhat_ > 0.5)
+      correct_t += torch.sum(pred==y_batch).item()
+      total_t += label.size(0)
 
-
-
+      print(f'Testing acc: {(100 * correct_t/total_t):.4f}\n')
 
 
 
