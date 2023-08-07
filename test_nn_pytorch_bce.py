@@ -211,13 +211,13 @@ class SiameseNetwork(nn.Module):
 # Load the training dataset
 train_dataloader = DataLoader(train_dataset,
                         shuffle=True,
-                        num_workers=8,
-                        batch_size=256)
+                        num_workers=16,
+                        batch_size=64)
 
 val_dataloader = DataLoader(val_dataset,
                         shuffle=True,
-                        num_workers=8,
-                        batch_size=256)
+                        num_workers=16,
+                        batch_size=64)
 
 from torch.nn.modules.loss import BCEWithLogitsLoss
 from torch.optim import lr_scheduler
@@ -226,12 +226,11 @@ net = SiameseNetwork()
 print(net)
 net = net.to(device)# to(device) cuda()
 
-
 #loss
 loss_fn = BCEWithLogitsLoss() #binary cross entropy with sigmoid, so no need to use sigmoid in the model
 
 #optimizer
-optimizer = torch.optim.Adam(net.fc.parameters()) 
+optimizer = torch.optim.Adam(net.fc.parameters(), lr = 1e-5) 
 
 #######################################################################################
 ## training process 
@@ -248,8 +247,10 @@ for epoch in range(500):
     running_loss = 0.0
     correct = 0
     total=0
+    correct_ = 0
     # Iterate over batches
     for i, (img0, img1, label) in enumerate(train_dataloader, 0):
+        net.train() 
 
         # Send the images and labels to CUDA
         img0, img1, label = img0.to(device), img1.to(device), label.to(device)
@@ -278,6 +279,15 @@ for epoch in range(500):
         # Every 10 batches print out the loss
         if i % 10 == 0 :
             print(f"Epoch number {epoch}\n Current loss {loss_contrastive.item()} and accuracy {(100 * correct / total)}\n")
+
+        net.eval()
+        output = net(img0, img1)
+        loss_t = loss_fn(output, label)
+        pred = (torch.sigmoid(output) > 0.5)
+        correct_ += torch.sum(pred==label).item()
+
+        if i % 10 == 0 :
+            print(f"Epoch number {epoch}\n Current val loss {loss_contrastive.item()} and accuracy {(100 * correct_ / total)}\n")        
 
     train_acc.append(100 * correct / total)
     train_loss.append(running_loss/total_step)
