@@ -198,12 +198,12 @@ class SiameseNetwork(nn.Module):
 train_dataloader = DataLoader(train_dataset,
                         shuffle=True,
                         num_workers=16,
-                        batch_size=16)
+                        batch_size=32)
 
 val_dataloader = DataLoader(val_dataset,
                         shuffle=True,
                         num_workers=16,
-                        batch_size=16)
+                        batch_size=32)
 
 from torch.nn.modules.loss import BCEWithLogitsLoss
 from torch.optim import lr_scheduler
@@ -214,7 +214,7 @@ net = SiameseNetwork().to(device)# to(device) cuda()
 loss_fn = BCEWithLogitsLoss() #binary cross entropy with sigmoid, so no need to use sigmoid in the model
 
 #optimizer
-optimizer = torch.optim.Adam(net.fc.parameters(), lr = 1e-5) 
+optimizer = torch.optim.Adam(net.fc.parameters(), lr = 1e-6) #
 
 #######################################################################################
 ## training process 
@@ -227,7 +227,7 @@ train_acc = []
 total_step = len(train_dataloader)
 
 # Iterate throught the epochs
-for epoch in range(500):
+for epoch in range(1000):
     running_loss = 0.0
     correct = 0
     total=0
@@ -442,6 +442,14 @@ with torch.no_grad():
     tes_acc = 100 * correct_t/total_t
     tes_loss = batch_loss/len(tes_dataloader)
     print(f'test loss: {np.mean(tes_loss):.4f}, test acc: {tes_acc:.4f}\n')
+
+
+
+# things to try later:
+# use softmax as the output activation 
+# add depth info to the input
+# schedule the learning rate
+
 
 
 
