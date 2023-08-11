@@ -136,7 +136,7 @@ val_dataset = SiameseNetworkDataset(file_path=val_,
 
 tes_dataset = SiameseNetworkDataset(file_path=tes_,
                                         transform=transformation)
-# Create a simple dataloader just for simple visualization
+# # Create a simple dataloader just for simple visualization
 # vis_dataloader = DataLoader(train_dataset,
 #                         shuffle=True,
 #                         num_workers=1,
@@ -241,8 +241,9 @@ for epoch in range(500):
     running_loss = 0.0
     correct = 0
     total=0
-    total_t=0
-    correct_ = 0
+    total_vt=0
+    correct_vt = 0
+    net.train()
     # Iterate over batches
     for i, (img0, img1, label) in enumerate(train_dataloader, 0):
         # Send the images and labels to CUDA
@@ -269,22 +270,22 @@ for epoch in range(500):
         correct += torch.sum(pred==label).item()
         total += label.size(0)
 
-        # Every 10 batches print out the loss
+        # Every 100 batches print out the loss
         if i % 100 == 0 :
             print(f"Epoch number {epoch}\n Current loss {loss_contrastive.item()} and accuracy {(100 * correct / total)}\n")
 
-            # with torch.no_grad():
-            #     net.eval()
-            #     # here i use the same data for both training and validation, however it seems the validation loss is mostly greater than the training loss,
-            #     # which should be reduced from my understanding because the optimization step means to modify the weights towards reducing the loss, 
-            #     # and i don't quite understand this part.
+            with torch.no_grad():
+                net.eval()
+                # here i use the same data for both training and validation, however it seems the validation loss is mostly greater than the training loss,
+                # which should be reduced from my understanding because the optimization step means to modify the weights towards reducing the loss, 
+                # and i don't quite understand this part.
 
-            #     output = net(img0, img1)
-            #     loss_t = loss_fn(output, label)
-            #     pred = (torch.sigmoid(output) > 0.5)
-            #     correct_ += torch.sum(pred==label).item()
-            #     total_t += label.size(0)
-            #     print(f"Epoch number {epoch}\n Current val loss {loss_t.item()} and accuracy {(100 * correct_ / total_t)}\n")       
+                output = net(img0, img1)
+                loss_vt = loss_fn(output, label)
+                pred = (torch.sigmoid(output) > 0.5)
+                correct_vt += torch.sum(pred==label).item()
+                total_vt += label.size(0)
+                print(f"Epoch number {epoch}\n Current val loss {loss_vt.item()} and accuracy {(100 * correct_vt / total_vt)}\n")       
 
     train_acc.append(100 * correct / total)
     train_loss.append(running_loss/total_step) #total_step
@@ -296,15 +297,19 @@ for epoch in range(500):
 
     with torch.no_grad():
         net.eval()
-        for img0, img1, label in val_dataloader:
-            img0, img1, label = img0.to(device), img1.to(device), label.to(device)
-            output = net(img0, img1)
-            loss_t = loss_fn(output, label)
+        for img0_, img1_, label_ in val_dataloader:
+            img0_, img1_, label_ = img0_.to(device), img1_.to(device), label_.to(device)
+            output_ = net(img0_, img1_)
+            loss_t = loss_fn(output_, label_)
             batch_loss += loss_t.item()
 
-            pred = (torch.sigmoid(output) > 0.5)
-            correct_t += torch.sum(pred==label).item()
-            total_t += label.size(0)
+            # print(label_)
+
+            pred_ = (torch.sigmoid(output_) > 0.5)
+            # print(torch.sigmoid(output_))
+            # print(pred_)
+            correct_t += torch.sum(pred_==label_).item()
+            total_t += label_.size(0)
 
             # print(f"Epoch number {epoch}\n Validation loss {loss_t.item()} and accuracy {(100 * correct_t / total_t)}\n")
 
