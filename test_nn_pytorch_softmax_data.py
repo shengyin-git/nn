@@ -116,7 +116,7 @@ class SiameseNetworkDataset(Dataset):
             img_mask = self.transform(img_mask)
 
         # return img_pile, img_mask, torch.from_numpy(label_, dtype=np.float32)
-        return img_pile, img_mask, torch.from_numpy(np.array([int(label_)], dtype=np.float32))
+        return img_pile, img_mask, torch.from_numpy(np.array(label_, dtype=np.int32).squeeze())
 
     def __len__(self):
         return self.len_
@@ -180,9 +180,9 @@ class SiameseNetwork(nn.Module):
         self.resnet.fc = nn.Flatten() # Identity() #
 
         # # Setting up the Fully Connected Layers
-        self.fc = nn.Linear(num_ftrs_resnet*2, 1)
+        self.fc = nn.Linear(num_ftrs_resnet*2, 2)
         # nn.Sequential(
-        #     nn.Linear(num_ftrs_resnet*2, 1),
+        #     nn.Linear(num_ftrs_resnet*2, 2),
         #     # nn.ReLU(), #inplace=True
         #     # nn.Dropout(p=0.3),
             
@@ -215,16 +215,15 @@ val_dataloader = DataLoader(val_dataset,
                         num_workers=16,
                         batch_size=32)
 
-from torch.nn.modules.loss import BCEWithLogitsLoss
 # from torch.optim import lr_scheduler
 
 net = SiameseNetwork().to(device)# to(device) cuda()
 
 #loss
-loss_fn = BCEWithLogitsLoss() #binary cross entropy with sigmoid, so no need to use sigmoid in the model
-
+loss_fn = nn.CrossEntropyLoss() #torch.nn.MSELoss()
 #optimizer
-optimizer = torch.optim.Adam(net.fc.parameters(), lr = 1e-7) #
+# optimizer = torch.optim.Adam(net.fc.parameters(), lr = 1e-7)
+optimizer = torch.optim.SGD(net.fc.parameters(), lr=1e-5, momentum=0.9) #
 
 #######################################################################################
 ## training process 
@@ -237,15 +236,15 @@ train_acc = []
 total_step = len(train_dataloader)
 
 # Iterate throught the epochs
-for epoch in range(500):
+for epoch in range(1):
     running_loss = 0.0
     correct = 0
     total=0
-    total_t=0
     correct_ = 0
     # Iterate over batches
     for i, (img0, img1, label) in enumerate(train_dataloader, 0):
         # Send the images and labels to CUDA
+        label = label.type(torch.LongTensor)
         img0, img1, label = img0.to(device), img1.to(device), label.to(device)
 
         # Zero the gradients
@@ -265,7 +264,7 @@ for epoch in range(500):
 
         # Accuracy
         running_loss += loss_contrastive.item()
-        pred = (torch.sigmoid(output) > 0.5)
+        _, pred = output.max(1)
         correct += torch.sum(pred==label).item()
         total += label.size(0)
 
@@ -273,36 +272,37 @@ for epoch in range(500):
         if i % 100 == 0 :
             print(f"Epoch number {epoch}\n Current loss {loss_contrastive.item()} and accuracy {(100 * correct / total)}\n")
 
-            # with torch.no_grad():
-            #     net.eval()
-            #     # here i use the same data for both training and validation, however it seems the validation loss is mostly greater than the training loss,
-            #     # which should be reduced from my understanding because the optimization step means to modify the weights towards reducing the loss, 
-            #     # and i don't quite understand this part.
+        # with torch.no_grad():
+        #     net.eval()
+        #     # here i use the same data for both training and validation, however it seems the validation loss is mostly greater than the training loss,
+        #     # which should be reduced from my understanding because the optimization step means to modify the weights towards reducing the loss, 
+        #     # and i don't quite understand this part.
 
-            #     output = net(img0, img1)
-            #     loss_t = loss_fn(output, label)
-            #     pred = (torch.sigmoid(output) > 0.5)
-            #     correct_ += torch.sum(pred==label).item()
-            #     total_t += label.size(0)
-            #     print(f"Epoch number {epoch}\n Current val loss {loss_t.item()} and accuracy {(100 * correct_ / total_t)}\n")       
+        #     output = net(img0, img1)
+        #     loss_t = loss_fn(output, label)
+        #     _, pred = output.max(1)
+        #     correct_ += torch.sum(pred==label).item()
+
+        #     if i % 10 == 0 :
+        #         print(f"Epoch number {epoch}\n Current val loss {loss_t.item()} and accuracy {(100 * correct_ / total)}\n")       
 
     train_acc.append(100 * correct / total)
-    train_loss.append(running_loss/total_step) #total_step
+    train_loss.append(running_loss/total_step)
     print(f'Training loss: {np.mean(train_loss):.4f}, training acc: {(100 * correct/total):.4f}\n')
     # validation
     batch_loss = 0
     total_t=0
     correct_t=0
-
     with torch.no_grad():
         net.eval()
         for img0, img1, label in val_dataloader:
+            label = label.type(torch.LongTensor)
             img0, img1, label = img0.to(device), img1.to(device), label.to(device)
             output = net(img0, img1)
             loss_t = loss_fn(output, label)
             batch_loss += loss_t.item()
 
-            pred = (torch.sigmoid(output) > 0.5)
+            _, pred = output.max(1)
             correct_t += torch.sum(pred==label).item()
             total_t += label.size(0)
 
@@ -350,20 +350,16 @@ with torch.no_grad():
     total_t = 0
     batch_loss = 0 
     for img0, img1, label in tes_dataloader:
+      label = label.type(torch.LongTensor)
       img0, img1, label = img0.to(device), img1.to(device), label.to(device)
 
       output = net(img0, img1)
       loss_t = loss_fn(output, label)
       batch_loss += loss_t.item()
 
-      pred = (torch.sigmoid(output) > 0.5)
+      _, pred = output.max(1)
       correct_t += torch.sum(pred==label).item()
       total_t += label.size(0)
-
-      output_ = torch.sigmoid(output)
-      # print(output.cpu().numpy().reshape(-1))
-      print(output_.cpu().numpy().reshape(-1))
-      print(label.cpu().numpy().reshape(-1)) 
 
     tes_acc = 100 * correct_t/total_t
     tes_loss = batch_loss/len(tes_dataloader) #
@@ -383,19 +379,20 @@ with torch.no_grad():
     total_t = 0
     batch_loss = 0
     img0, img1, label = example_batch
+    label = label.type(torch.LongTensor)
     img0, img1, label = img0.to(device), img1.to(device), label.to(device)
 
     output = net(img0, img1)
     loss_t = loss_fn(output, label)
     batch_loss += loss_t.item()
 
-    pred = (torch.sigmoid(output) > 0.5)
+    _, pred = output.max(1)
     correct_t += torch.sum(pred==label).item()
     total_t += label.size(0)
 
     output_ = torch.sigmoid(output)
-    print(loss_t.item())
-    print(output_.cpu().numpy().reshape(-1))
+
+    print(pred.cpu().numpy().reshape(-1))
     print(label.cpu().numpy().reshape(-1)) 
 
     tes_acc = 100 * correct_t/total_t

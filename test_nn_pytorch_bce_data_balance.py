@@ -44,8 +44,27 @@ def show_plot(iteration,loss):
     plt.show()
 
 def split_train_val_tes(file_path, num_ = None, ratio_=None):
-    pile_files = glob.glob(file_path)
-    len_ = len(pile_files)
+    label_files = glob.glob(file_path)
+    len_ = len(label_files)
+
+    labels = np.zeros(len_)
+    for i in range(len_):
+        labels[i] = np.load(label_files[i])
+    
+    ones_ = np.where(labels == 1)[0]
+    zeros_ = np.where(labels == 0)[0]
+    num_ones = len(ones_)
+    num_zeros = len(zeros_)
+
+    reduced_zeros = np.random.choice(zeros_, size=num_zeros-num_ones, replace=False)
+    reduced_zeros = np.sort(reduced_zeros)
+
+    len_reduce = len(reduced_zeros)
+
+    for i in range(len_reduce):
+        label_files.pop(reduced_zeros[len_reduce-1-i])
+
+    len_ = len(label_files)
 
     if num_ is not None:
         num_train, num_val, num_tes = num_
@@ -54,7 +73,7 @@ def split_train_val_tes(file_path, num_ = None, ratio_=None):
         num_val = min(np.int32(len_*ratio_[1]), len_-num_train)
         num_tes = min(np.int32(len_*ratio_[2]), len_-num_train-num_val)
 
-    pile_train = np.random.choice(pile_files, size=num_train, replace=False)    
+    label_train = np.random.choice(label_files, size=num_train, replace=False)    
     # mask_train = copy.deepcopy(pile_train)
     # label_train = copy.deepcopy(pile_train)
     # for i in range(num_train):
@@ -62,8 +81,8 @@ def split_train_val_tes(file_path, num_ = None, ratio_=None):
     #     label_train[i] = np.char.replace(mask_train[i], 'pile_imgs', 'labels')
     #     label_train[i] = np.char.replace(mask_train[i], 'jpg', 'npy')
 
-    pile_files = list(set(pile_files)-set(pile_train))
-    pile_val = np.random.choice(pile_files, size=num_val, replace=False)
+    label_files = list(set(label_files)-set(label_train))
+    label_val = np.random.choice(label_files, size=num_val, replace=False)
     # mask_val = copy.deepcopy(pile_val)
     # label_val = copy.deepcopy(pile_val)
     # for i in range(num_val):
@@ -71,8 +90,8 @@ def split_train_val_tes(file_path, num_ = None, ratio_=None):
     #     label_val[i] = np.char.replace(mask_val[i], 'pile_imgs', 'labels')
     #     label_val[i] = np.char.replace(mask_val[i], 'jpg', 'npy')
 
-    pile_files = list(set(pile_files)-set(pile_val))
-    pile_tes = np.random.choice(pile_files, size=num_tes, replace=False)
+    label_files = list(set(label_files)-set(label_val))
+    label_tes = np.random.choice(label_files, size=num_tes, replace=False)
     # mask_tes = copy.deepcopy(pile_tes)
     # label_tes = copy.deepcopy(pile_tes)
     # for i in range(num_tes):
@@ -80,9 +99,9 @@ def split_train_val_tes(file_path, num_ = None, ratio_=None):
     #     label_tes[i] = np.char.replace(mask_tes[i], 'pile_imgs', 'labels')
     #     label_tes[i] = np.char.replace(mask_tes[i], 'jpg', 'npy')
 
-    train_ = pile_train
-    val_ = pile_val
-    tes_ = pile_tes
+    train_ = label_train
+    val_ = label_val
+    tes_ = label_tes
 
     return train_, val_, tes_
 
@@ -90,26 +109,26 @@ class SiameseNetworkDataset(Dataset):
     def __init__(self,file_path,transform=None):
         self.transform = transform
 
-        self.pile_files = file_path
+        self.label_files = file_path
         # self.mask_files = file_path[1]
         # self.label_path = label_path
 
-        self.len_ = len(self.pile_files)
+        self.len_ = len(self.label_files)
 
     def __getitem__(self,idx):
-        rnd_pile = self.pile_files[idx]
-        img_pile = Image.open(rnd_pile)     
+        rnd_label = self.label_files[idx]
+        label_ = np.load(rnd_label)
         ##########################################
-        # rnd_pile = random.choice(self.pile_files)
-        # img_pile = Image.open(rnd_pile)
+        # rnd_label = random.choice(self.label_files)
+        # label_ = np.load(rnd_label)
         ##########################################
+
+        rnd_pile = np.char.replace(rnd_label, 'labels', 'pile_imgs')
+        rnd_pile = np.char.replace(rnd_pile, 'npy', 'jpg')
+        img_pile = Image.open(str(rnd_pile))   
 
         rnd_mask = np.char.replace(rnd_pile, 'pile_imgs', 'mask_imgs')
         img_mask = Image.open(str(rnd_mask))
-
-        rnd_label = np.char.replace(rnd_pile, 'pile_imgs', 'labels')
-        rnd_label = np.char.replace(rnd_label, 'jpg', 'npy')
-        label_ = np.load(str(rnd_label))
 
         if self.transform is not None:
             img_pile = self.transform(img_pile)
@@ -124,7 +143,7 @@ class SiameseNetworkDataset(Dataset):
 # Load the training dataset
 # Resize the images and transform to tensors
 # train_, val_, tes_ = split_train_val_tes(file_path='./data_224/pile_imgs/*', num_=[1500,150,150])
-train_, val_, tes_ = split_train_val_tes(file_path='./data_224/pile_imgs/*', ratio_=[0.7,0.2,0.1])
+train_, val_, tes_ = split_train_val_tes(file_path='./data_224_/labels/*', ratio_=[0.7,0.2,0.1])
 
 transformation = transforms.Compose([transforms.Resize((224,224)),
                                      transforms.ToTensor()])
@@ -180,20 +199,19 @@ class SiameseNetwork(nn.Module):
         self.resnet.fc = nn.Flatten() # Identity() #
 
         # # Setting up the Fully Connected Layers
-        self.fc = nn.Linear(num_ftrs_resnet*2, 1)
-        # nn.Sequential(
-        #     nn.Linear(num_ftrs_resnet*2, 1),
-        #     # nn.ReLU(), #inplace=True
-        #     # nn.Dropout(p=0.3),
+        self.fc = nn.Sequential(
+            nn.Linear(num_ftrs_resnet*2, 1),
+            # nn.ReLU(), #inplace=True
+            # nn.Dropout(p=0.3),
             
-        #     # # nn.Linear(1024, 512),
-        #     # # nn.ReLU(inplace=True),
+            # # nn.Linear(1024, 512),
+            # # nn.ReLU(inplace=True),
 
-        #     # # nn.Linear(512, 256),
-        #     # # nn.ReLU(inplace=True),
+            # # nn.Linear(512, 256),
+            # # nn.ReLU(inplace=True),
             
-        #     # nn.Linear(1024,1)
-        # )
+            # nn.Linear(1024,1)
+        )
 
     def forward(self, input1, input2):
         # In this function we pass in both images and obtain both vectors which are returned
@@ -208,12 +226,12 @@ class SiameseNetwork(nn.Module):
 train_dataloader = DataLoader(train_dataset,
                         shuffle=True,
                         num_workers=16,
-                        batch_size=32)
+                        batch_size=16)
 
 val_dataloader = DataLoader(val_dataset,
                         shuffle=True,
                         num_workers=16,
-                        batch_size=32)
+                        batch_size=16)
 
 from torch.nn.modules.loss import BCEWithLogitsLoss
 # from torch.optim import lr_scheduler
@@ -224,7 +242,7 @@ net = SiameseNetwork().to(device)# to(device) cuda()
 loss_fn = BCEWithLogitsLoss() #binary cross entropy with sigmoid, so no need to use sigmoid in the model
 
 #optimizer
-optimizer = torch.optim.Adam(net.fc.parameters(), lr = 1e-7) #
+optimizer = torch.optim.Adam(net.fc.parameters()) #, lr = 1e-7
 
 #######################################################################################
 ## training process 
@@ -237,14 +255,14 @@ train_acc = []
 total_step = len(train_dataloader)
 
 # Iterate throught the epochs
-for epoch in range(500):
+for epoch in range(50):
     running_loss = 0.0
     correct = 0
     total=0
-    total_t=0
     correct_ = 0
     # Iterate over batches
     for i, (img0, img1, label) in enumerate(train_dataloader, 0):
+        net.train() 
         # Send the images and labels to CUDA
         img0, img1, label = img0.to(device), img1.to(device), label.to(device)
 
@@ -270,21 +288,22 @@ for epoch in range(500):
         total += label.size(0)
 
         # Every 10 batches print out the loss
-        if i % 100 == 0 :
+        if i % 10 == 0 :
             print(f"Epoch number {epoch}\n Current loss {loss_contrastive.item()} and accuracy {(100 * correct / total)}\n")
 
-            # with torch.no_grad():
-            #     net.eval()
-            #     # here i use the same data for both training and validation, however it seems the validation loss is mostly greater than the training loss,
-            #     # which should be reduced from my understanding because the optimization step means to modify the weights towards reducing the loss, 
-            #     # and i don't quite understand this part.
+        # with torch.no_grad():
+        #     net.eval()
+        #     # here i use the same data for both training and validation, however it seems the validation loss is mostly greater than the training loss,
+        #     # which should be reduced from my understanding because the optimization step means to modify the weights towards reducing the loss, 
+        #     # and i don't quite understand this part.
 
-            #     output = net(img0, img1)
-            #     loss_t = loss_fn(output, label)
-            #     pred = (torch.sigmoid(output) > 0.5)
-            #     correct_ += torch.sum(pred==label).item()
-            #     total_t += label.size(0)
-            #     print(f"Epoch number {epoch}\n Current val loss {loss_t.item()} and accuracy {(100 * correct_ / total_t)}\n")       
+        #     output = net(img0, img1)
+        #     loss_t = loss_fn(output, label)
+        #     pred = (torch.sigmoid(output) > 0.5)
+        #     correct_ += torch.sum(pred==label).item()
+
+        #     if i % 10 == 0 :
+        #         print(f"Epoch number {epoch}\n Current val loss {loss_t.item()} and accuracy {(100 * correct_ / total)}\n")       
 
     train_acc.append(100 * correct / total)
     train_loss.append(running_loss/total_step) #total_step
@@ -337,6 +356,94 @@ plt.xlabel('num_epochs', fontsize=12)
 plt.ylabel('loss', fontsize=12)
 plt.legend(loc='best')
 plt.savefig('./results/training_val_loss_' + str(ts) + '.png')
+
+################################################################################################
+# def make_train_step(model, optimizer, loss_fn):
+#   def train_step(x,y):
+#     #make prediction
+#     yhat = model(x[0],x[1])
+#     #enter train mode
+#     model.train()
+#     #compute loss
+#     loss = loss_fn(yhat,y)
+
+#     loss.backward()
+#     optimizer.step()
+#     optimizer.zero_grad()
+#     #optimizer.cleargrads()
+
+#     return loss
+#   return train_step
+
+# train_step = make_train_step(net, optimizer, loss_fn)
+
+# from tqdm import tqdm
+
+# losses = []
+# val_losses = []
+
+# epoch_train_losses = []
+# epoch_test_losses = []
+
+# n_epochs = 500
+# early_stopping_tolerance = 5
+# early_stopping_threshold = 0.001
+
+# for epoch in range(n_epochs):
+#   epoch_loss = 0
+#   for i ,data in tqdm(enumerate(train_dataloader), total = len(train_dataloader)): #iterate ove batches
+#     x1_batch , x2_batch , y_batch = data
+#     x1_batch = x1_batch.to(device) #move to gpu
+#     x2_batch = x2_batch.to(device)
+#     # y_batch = y_batch.unsqueeze(1).float() #convert target to same nn output shape
+#     y_batch = y_batch.to(device) #move to gpu
+
+
+#     loss = train_step((x1_batch,x2_batch), y_batch)
+#     epoch_loss += loss/len(train_dataloader)
+#     losses.append(loss)
+    
+#   epoch_train_losses.append(epoch_loss)
+#   print('\nEpoch : {}, train loss : {}'.format(epoch+1,epoch_loss))
+
+#   #validation doesnt requires gradient
+#   with torch.no_grad():
+#     cum_loss = 0
+#     for x1_batch , x2_batch, y_batch in train_dataloader:
+#       x1_batch = x1_batch.to(device)
+#       x2_batch = x2_batch.to(device)
+#     #   y_batch = y_batch.unsqueeze(1).float() #convert target to same nn output shape
+#       y_batch = y_batch.to(device) #move to gpu
+
+#       #model to eval mode
+#       net.eval()
+
+#       yhat = net(x1_batch,x2_batch)
+#       val_loss = loss_fn(yhat,y_batch)
+#       cum_loss += loss/len(train_dataloader)
+#       val_losses.append(val_loss.item())
+
+
+#     epoch_test_losses.append(cum_loss)
+#     print('Epoch : {}, val loss : {}'.format(epoch+1,cum_loss))  
+    
+#     best_loss = min(epoch_test_losses)
+    
+#     #save best model
+#     if cum_loss <= best_loss:
+#       best_model_wts = net.state_dict()
+    
+#     #early stopping
+#     early_stopping_counter = 0
+#     if cum_loss > best_loss:
+#       early_stopping_counter +=1
+
+#     if (early_stopping_counter == early_stopping_tolerance) or (best_loss <= early_stopping_threshold):
+#       print("/nTerminating: early stopping")
+#       break #terminate training
+    
+# #load best model
+# # model.load_state_dict(best_model_wts)
 
 ############################################################
 tes_dataloader = DataLoader(tes_dataset,
@@ -395,11 +502,12 @@ with torch.no_grad():
 
     output_ = torch.sigmoid(output)
     print(loss_t.item())
+    # print(output.cpu().numpy().reshape(-1))
     print(output_.cpu().numpy().reshape(-1))
     print(label.cpu().numpy().reshape(-1)) 
 
     tes_acc = 100 * correct_t/total_t
-    tes_loss = batch_loss
+    tes_loss = batch_loss/total_t #len(tes_dataloader)
     print(f'test loss: {np.mean(tes_loss):.4f}, test acc: {tes_acc:.4f}\n')
 
 concatenated = torch.cat((example_batch[0], example_batch[1]),0)
