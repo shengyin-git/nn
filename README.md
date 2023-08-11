@@ -14,3 +14,5 @@ test_nn_pytorch_softmax_data.py is the script for testing with data_224 using so
 
 test_nn_pytorch_bce_data_balance.py is the script for testing with data_224 (equal number of label 0 and label 1) using sigmoid and binary cross entropy loss. 
 
+test_nn_pytorch_bce_data.py is the one recommended.
+
