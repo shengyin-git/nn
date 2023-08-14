@@ -96,8 +96,6 @@ class SiameseNetworkDataset(Dataset):
         return self.len_
 
 # Load the training dataset
-# Resize the images and transform to tensors
-# train_, val_, tes_ = split_train_val_tes(file_path='./data_224/pile_imgs/*', num_=[1500,150,150])
 pile_files, train_, val_, tes_= split_train_val_tes(file_path='./data_224/labels/*', ratio_=[0.7,0.2,0.1])
 
 all_dataset = SiameseNetworkDataset(file_path=pile_files)
@@ -201,18 +199,6 @@ for epoch in range(50):
         if i % 100 == 0 :
             print(f"Epoch number {epoch}\n Current loss {loss_contrastive.item()} and accuracy {(100 * correct / total)}\n")
 
-            # with torch.no_grad():
-            #     # net.eval()
-            # # here i use the same data for both training and validation, however it seems the validation loss is mostly greater than the training loss,
-            # # which should be reduced from my understanding because the optimization step means to modify the weights towards reducing the loss, 
-            # # and i don't quite understand this part.
-            #     output = net(img0, img1)
-            #     loss_vt = loss_fn(output, label)
-            #     pred = (torch.sigmoid(output) > 0.5)
-            #     correct_vt += torch.sum(pred==label).item()
-            #     total_vt += label.size(0)
-            #     print(f"Epoch number {epoch}\n Current val loss {loss_vt.item()} and accuracy {(100 * correct_vt / total_vt)}\n")       
-            # # net.train()
     train_acc.append(100 * correct / total)
     train_loss.append(running_loss/total_step) #total_step
     print(f'Training loss: {np.mean(train_loss):.4f}, training acc: {(100 * correct/total):.4f}\n')
