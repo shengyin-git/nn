@@ -181,20 +181,7 @@ class SiameseNetwork(nn.Module):
 
         # # Setting up the Fully Connected Layers
         self.fc = nn.Linear(num_ftrs_resnet*2, 2)
-        # nn.Sequential(
-        #     nn.Linear(num_ftrs_resnet*2, 2),
-        #     # nn.ReLU(), #inplace=True
-        #     # nn.Dropout(p=0.3),
-            
-        #     # # nn.Linear(1024, 512),
-        #     # # nn.ReLU(inplace=True),
-
-        #     # # nn.Linear(512, 256),
-        #     # # nn.ReLU(inplace=True),
-            
-        #     # nn.Linear(1024,1)
-        # )
-
+        
     def forward(self, input1, input2):
         # In this function we pass in both images and obtain both vectors which are returned
         output1 = self.resnet(input1)
@@ -223,7 +210,7 @@ net = SiameseNetwork().to(device)# to(device) cuda()
 loss_fn = nn.CrossEntropyLoss() #torch.nn.MSELoss()
 #optimizer
 # optimizer = torch.optim.Adam(net.fc.parameters(), lr = 1e-7)
-optimizer = torch.optim.SGD(net.fc.parameters(), lr=1e-5, momentum=0.9) #
+optimizer = torch.optim.SGD(net.fc.parameters(), lr=1e-3, momentum=0.9)
 
 #######################################################################################
 ## training process 
@@ -236,7 +223,7 @@ train_acc = []
 total_step = len(train_dataloader)
 
 # Iterate throught the epochs
-for epoch in range(1):
+for epoch in range(50):
     running_loss = 0.0
     correct = 0
     total=0
@@ -294,7 +281,7 @@ for epoch in range(1):
     total_t=0
     correct_t=0
     with torch.no_grad():
-        net.eval()
+        # net.eval()
         for img0, img1, label in val_dataloader:
             label = label.type(torch.LongTensor)
             img0, img1, label = img0.to(device), img1.to(device), label.to(device)
@@ -318,7 +305,7 @@ for epoch in range(1):
             torch.save(net.state_dict(), './data_224/my_net_'+ str(ts)+'.pt')
             print('Improvement-Detected, save-model')
 
-    net.train()        
+    # net.train()        
 
 fig = plt.figure(figsize=(20,10))
 plt.title("Train-Validation Accuracy")
@@ -345,7 +332,7 @@ tes_dataloader = DataLoader(tes_dataset,
                         batch_size=8)
 
 with torch.no_grad():
-    net.eval()
+    # net.eval()
     correct_t = 0
     total_t = 0
     batch_loss = 0 
@@ -374,7 +361,7 @@ vis_dataloader = DataLoader(tes_dataset,
 example_batch = next(iter(vis_dataloader))
 
 with torch.no_grad():
-    net.eval()
+    # net.eval()
     correct_t = 0
     total_t = 0
     batch_loss = 0
@@ -402,10 +389,6 @@ with torch.no_grad():
 concatenated = torch.cat((example_batch[0], example_batch[1]),0)
 imshow(torchvision.utils.make_grid(concatenated))
 
-# things to try later:
-# use softmax as the output activation 
-# add depth info to the input
-# schedule the learning rate
 
 
 

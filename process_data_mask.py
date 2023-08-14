@@ -8,6 +8,19 @@ import os
 import glob
 import json
 
+import torchvision
+from torchvision import models
+from torchvision.models import ResNet101_Weights
+import torch
+import torch.nn as nn
+
+resnet = models.resnet101(weights=ResNet101_Weights.DEFAULT) 
+num_ftrs_resnet = resnet.fc.in_features
+resnet.fc = nn.Flatten()
+for param in resnet.parameters():
+            param.requires_grad = False
+resnet.eval()
+
 class process_data(object):   
     def __init__(self, pos_path = 'im_pick_pt.npy', \
                         ori_path = 'pick_orn.npy', \
@@ -111,6 +124,20 @@ class process_data(object):
                     else:
                         os.makedirs(label_path, exist_ok=True)
                         np.save(label_path + str(ts) + str(rnd_) + '.npy', labels[i])
+
+                    # pile_img_path = os.path.join(self.save_path,'pile_imgs/')                    
+                    # if os.path.exists(pile_img_path):
+                    #     masked_pile_images_.save(pile_img_path + str(ts) + str(rnd_) + '.jpg')
+                    # else:
+                    #     os.makedirs(pile_img_path, exist_ok=True)
+                    #     masked_pile_images_.save(pile_img_path + str(ts) + str(rnd_) + '.jpg')
+
+                    # mask_img_path = os.path.join(self.save_path,'mask_imgs/')
+                    # if os.path.exists(mask_img_path):
+                    #     masked_image_.save(mask_img_path + str(ts) + str(rnd_) + '.jpg')
+                    # else:
+                    #     os.makedirs(mask_img_path, exist_ok=True)
+                    #     masked_image_.save(mask_img_path + str(ts) + str(rnd_) + '.jpg')
 
                     # label_path = self.save_path + 'labels.json'
                     # if os.path.exists(label_path): # label file exist
