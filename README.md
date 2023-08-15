@@ -16,5 +16,7 @@ test_nn_pytorch_bce_data_balance.py is the script for testing with data_224 (equ
 
 test_nn_pytorch_softmax_feature.py is the script for testing with data_224 with resnet extracted features already using softmax and cross entropy loss.
 
+reload_nn.py is for testing the trained neural network. 
+
 test_nn_pytorch_bce_feature.py is the one recommended.
 

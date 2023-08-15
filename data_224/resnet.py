@@ -35,14 +35,15 @@ num_files = len(files)
 
 for i in range(num_files):
     img_path = files[i]
-    img = Image.open(img_path)
-    img= transformation(img)
+    print(img_path)
+    # img = Image.open(img_path)
+    # img= transformation(img)
 
-    img_feature = resnet(img.unsqueeze(0))
+    # img_feature = resnet(img.unsqueeze(0))
 
-    img_array = img_feature.cpu().numpy().reshape(-1)
+    # img_array = img_feature.cpu().numpy().reshape(-1)
 
-    array_path = str(np.char.replace(img_path, 'jpg', 'npy'))
+    # array_path = str(np.char.replace(img_path, 'jpg', 'npy'))
 
-    np.save(array_path, img_array)
+    # # np.save(array_path, img_array)
 
