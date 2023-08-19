@@ -245,7 +245,7 @@ for epoch in range(50):
 
     if network_learned:
         valid_loss_min = batch_loss
-        torch.save(net.state_dict(), './data_224/my_net_'+ str(ts)+'.pt')
+        torch.save(net.state_dict(), './data_224_convolved/my_net_'+ str(ts)+'.pt')
         print('Improvement-Detected, save-model') 
    
 # torch.save(net.state_dict(), './data_224/my_net_'+ str(ts)+'.pt')
