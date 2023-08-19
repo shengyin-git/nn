@@ -13,6 +13,7 @@ from torchvision import models
 from torchvision.models import ResNet101_Weights
 import torch
 import torch.nn as nn
+import torchvision.transforms as transforms
 
 resnet = models.resnet101(weights=ResNet101_Weights.DEFAULT) 
 num_ftrs_resnet = resnet.fc.in_features
@@ -28,19 +29,18 @@ class process_data(object):
                         masks_path = 'pruned_masks_no_back_vit_h_rgb_image.npz', \
                         label_path = 'masks_vit_h_removed_rgb_image.npy', \
                         target_size = [500,500], \
-                        save_path = None):
+                        save_path = None,\
+                        inspect = False):
         self.pos_path = pos_path
         self.ori_path = ori_path
         self.image_path = image_path
         self.masks_path = masks_path
         self.label_path = label_path
         self.target_size = target_size
-        self.save_path = save_path        
+        self.save_path = save_path 
+        self.inspect = inspect       
 
     def process_(self):
-        # load picking
-        pos = np.load(self.pos_path)
-        orientation = np.load(self.ori_path)
         # load original image and label 
         if not os.path.exists(self.label_path):
             return False
@@ -55,10 +55,19 @@ class process_data(object):
         self.w, self.h = image.size
         _image = Image.new("RGB", (self.w, self.h), color=(255, 255, 255))
 
+        # load picking position and orientation
+        pos = np.load(self.pos_path)
+        orientation = np.load(self.ori_path)
+
         # get masked pile image
         masks = np.load(self.masks_path, allow_pickle=True)
         masks_min = masks['min']
         num_masks = len(masks_min)
+
+        if num_masks == 0:
+            print(self.masks_path)
+            print('No item in the masks.')
+            return False
 
         pile_mask = masks_min[0]['segmentation'] 
         for i in range(num_masks-1):
@@ -66,6 +75,8 @@ class process_data(object):
         
         masked_pile_images = self.apply_mask(image, pile_mask)
         masked_pile_images_ = self.extend_translate_rotate_cut(ori_img=masked_pile_images, tran=pos, rot=orientation, size_=self.target_size)
+
+        masked_pile_feature = self.get_feature(masked_pile_images_)
 
         # get masked individual image
         # plt.ion()
@@ -76,34 +87,40 @@ class process_data(object):
 
             masked_image_arr = np.asarray(masked_image_)
             if np.any(masked_image_arr):
-                # plt.figure(figsize=(10, 10))
-                # plt.subplot(1, 3, 1)
-                # plt.title('Piled Image')
-                # plt.imshow(masked_pile_images_)
-                # plt.plot(self.target_size[0]/2, self.target_size[1]/2, "og", markersize=10)
-                # plt.axis('off')
+                masked_feature = self.get_feature(masked_image_)
 
-                # plt.subplot(1, 3, 2)
-                # plt.title('Mask Image')
-                # plt.imshow(masked_image_)
-                # plt.plot(self.target_size[0]/2, self.target_size[1]/2, "og", markersize=10)
-                # plt.axis('off')
+                if self.inspect:
+                    plt.figure(figsize=(10, 10))
+                    plt.subplot(1, 3, 1)
+                    plt.title('Piled Image')
+                    plt.imshow(masked_pile_images_)
+                    plt.plot(self.target_size[0]/2, self.target_size[1]/2, "og", markersize=10)
+                    plt.axis('off')
 
-                # plt.subplot(1, 3, 3)
-                # plt.title('Original Image')
-                # plt.imshow(image)
-                # plt.plot(pos[1], pos[0], "og", markersize=10)
-                # plt.axis('off')
+                    plt.subplot(1, 3, 2)
+                    plt.title('Mask Image')
+                    plt.imshow(masked_image_)
+                    plt.plot(self.target_size[0]/2, self.target_size[1]/2, "og", markersize=10)
+                    plt.axis('off')
 
-                # plt.show()
-                # time.sleep(2)
-                # plt.close("all")
+                    plt.subplot(1, 3, 3)
+                    plt.title('Original Image')
+                    plt.imshow(image)
+                    plt.plot(pos[1], pos[0], "og", markersize=10)
+                    plt.axis('off')
 
-                # save paired images
-                if self.save_path is not None:
+                    plt.show()
+                    time.sleep(2)
+                    plt.close("all")
+
+                    input()
+                elif self.save_path is not None:
+                    # save paired images
+                    
                     ts = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
                     rnd_ = np.random.randint(0,10000)
 
+                    ## pile
                     pile_img_path = os.path.join(self.save_path,'pile_imgs/')                    
                     if os.path.exists(pile_img_path):
                         masked_pile_images_.save(pile_img_path + str(ts) + str(rnd_) + '.jpg')
@@ -111,6 +128,14 @@ class process_data(object):
                         os.makedirs(pile_img_path, exist_ok=True)
                         masked_pile_images_.save(pile_img_path + str(ts) + str(rnd_) + '.jpg')
 
+                    pile_feature_path = os.path.join(self.save_path,'pile_features/')                    
+                    if os.path.exists(pile_feature_path):
+                        np.save(pile_feature_path + str(ts) + str(rnd_) + '.npy', masked_pile_feature)
+                    else:
+                        os.makedirs(pile_feature_path, exist_ok=True)
+                        np.save(pile_feature_path + str(ts) + str(rnd_) + '.npy', masked_pile_feature)
+
+                    ## mask
                     mask_img_path = os.path.join(self.save_path,'mask_imgs/')
                     if os.path.exists(mask_img_path):
                         masked_image_.save(mask_img_path + str(ts) + str(rnd_) + '.jpg')
@@ -118,6 +143,14 @@ class process_data(object):
                         os.makedirs(mask_img_path, exist_ok=True)
                         masked_image_.save(mask_img_path + str(ts) + str(rnd_) + '.jpg')
 
+                    mask_feature_path = os.path.join(self.save_path,'mask_features/')                    
+                    if os.path.exists(mask_feature_path):
+                        np.save(mask_feature_path + str(ts) + str(rnd_) + '.npy', masked_feature)
+                    else:
+                        os.makedirs(mask_feature_path, exist_ok=True)
+                        np.save(mask_feature_path + str(ts) + str(rnd_) + '.npy', masked_feature)
+
+                    ## label
                     label_path = os.path.join(self.save_path,'labels/')
                     if os.path.exists(label_path):
                         np.save(label_path + str(ts) + str(rnd_) + '.npy', labels[i])
@@ -146,7 +179,7 @@ class process_data(object):
                     #     data_[str(ts) + str(rnd_)] = labels[i]
                     #     with open(label_path, 'w') as file:
                     #         json.dump(data_, file, indent=4)
-                 
+                
                     # elif os.path.exists(self.save_path): # label file not exist but saving dir exist
                     #     data_ = {str(ts) + str(rnd_): labels[i]}
                     #     with open(label_path, 'w') as file:
@@ -156,8 +189,20 @@ class process_data(object):
                     #     data_ = {str(ts) + str(rnd_): labels[i]}
                     #     with open(label_path, 'w') as file:
                     #         json.dump(data_, file, indent=4)
+                else:
+                    print('Not showing or saving anything.')
 
         return True
+    
+    def get_feature(self, img):
+        transformation = transforms.Compose([transforms.Resize((224,224)),
+                                     transforms.ToTensor()])
+        
+        img= transformation(img)
+        img_feature = resnet(img.unsqueeze(0))
+        feature_array = img_feature.cpu().numpy().reshape(-1)
+
+        return feature_array
 
     def apply_mask(self, image, mask):
         # Step 1: Convert the image and mask to PyTorch tensors
@@ -211,23 +256,26 @@ def main():
 
     current_dir = os.path.abspath(os.path.join(os.path.dirname('__file__')))
 
-    files_ = glob.glob(current_dir+'/*')
-    len_ = len(files_)
+    sample_files = glob.glob(current_dir+'/method_random_full/*')
+    len_sample = len(sample_files)
 
-    for i in range(len_):
-        files__ = glob.glob(files_[0]+'/*')
-        trial_files = [fn for fn in files__ if 'trial' in fn]
-        len__ = len(trial_files)
+    for i in range(len_sample):
+        # print(sample_files[i])
+        temp_trial_files = glob.glob(sample_files[i]+'/*')
+        trial_files = [fn for fn in temp_trial_files if 'trial' in fn]
+        len_trial = len(trial_files)
 
-        for j in range(len__):
+        for j in range(len_trial):
+            print(trial_files[j])
             p = process_data(\
                             pos_path = trial_files[j]+'/im_pick_pt.npy',\
                             ori_path = trial_files[j]+'/pick_orn.npy',\
                             image_path = trial_files[j]+'/rgb_image.jpg',\
-                            masks_path = trial_files[j]+'/pruned_masks_no_back_vit_h_rgb_image.npz',\
-                            label_path = trial_files[j]+'/masks_vit_h_removed_rgb_image.npy',\
+                            masks_path = trial_files[j]+'/pruned_masks_no_back_vit_h_rgb_image_convolved.npz',\
+                            label_path = trial_files[j]+'/masks_vit_h_removed_rgb_image_convolved.npy',\
                             target_size = [224,224],\
-                            save_path = './data_224/')
+                            save_path = './data_224_convolved/',\
+                            inspect = False)
             success = p.process_()
             print(success)
 

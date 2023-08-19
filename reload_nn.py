@@ -50,7 +50,10 @@ class SiameseNetwork(nn.Module):
 
     def forward(self, input1, input2):
         # In this function we pass in both images and obtain both vectors which are returned
+        print(np.shape(input1))
+        print(np.shape(input2))
         output12 = torch.cat((input1, input2),1)
+        print(np.shape(output12))
         output = self.fc(output12)
         return output
 
@@ -139,82 +142,82 @@ print(f'The accuracy of the trained model is {100*correct/num_files}')
 
 ## Testing Method 3: input the sample using data loader as training
 
-def split_train_val_tes(file_path, num_ = None, ratio_=None):
-    pile_files = glob.glob(file_path)
-    len_ = len(pile_files)
+# def split_train_val_tes(file_path, num_ = None, ratio_=None):
+#     pile_files = glob.glob(file_path)
+#     len_ = len(pile_files)
 
-    if num_ is not None:
-        num_train, num_val, num_tes = num_
-    else:
-        num_train = np.int32(len_*ratio_[0])
-        num_val = min(np.int32(len_*ratio_[1]), len_-num_train)
-        num_tes = min(np.int32(len_*ratio_[2]), len_-num_train-num_val)
+#     if num_ is not None:
+#         num_train, num_val, num_tes = num_
+#     else:
+#         num_train = np.int32(len_*ratio_[0])
+#         num_val = min(np.int32(len_*ratio_[1]), len_-num_train)
+#         num_tes = min(np.int32(len_*ratio_[2]), len_-num_train-num_val)
 
-    pile_train = np.random.choice(pile_files, size=num_train, replace=False)    
+#     pile_train = np.random.choice(pile_files, size=num_train, replace=False)    
 
-    pile_files = list(set(pile_files)-set(pile_train))
-    pile_val = np.random.choice(pile_files, size=num_val, replace=False)
+#     pile_files = list(set(pile_files)-set(pile_train))
+#     pile_val = np.random.choice(pile_files, size=num_val, replace=False)
 
-    pile_files = list(set(pile_files)-set(pile_val))
-    pile_tes = np.random.choice(pile_files, size=num_tes, replace=False)
+#     pile_files = list(set(pile_files)-set(pile_val))
+#     pile_tes = np.random.choice(pile_files, size=num_tes, replace=False)
 
-    train_ = pile_train
-    val_ = pile_val
-    tes_ = pile_tes
+#     train_ = pile_train
+#     val_ = pile_val
+#     tes_ = pile_tes
 
-    return pile_files, train_, val_, tes_
+#     return pile_files, train_, val_, tes_
 
-class SiameseNetworkDataset(Dataset):
-    def __init__(self,file_path):
-        self.label_files = file_path
-        self.len_ = len(self.label_files)
+# class SiameseNetworkDataset(Dataset):
+#     def __init__(self,file_path):
+#         self.label_files = file_path
+#         self.len_ = len(self.label_files)
 
-    def __getitem__(self,idx):
-        rnd_label = self.label_files[idx]
-        label = np.load(rnd_label)     
+#     def __getitem__(self,idx):
+#         rnd_label = self.label_files[idx]
+#         label = np.load(rnd_label)     
 
-        rnd_pile = np.char.replace(rnd_label, 'labels', 'pile_imgs')
-        img_pile = np.load(str(rnd_pile))
+#         rnd_pile = np.char.replace(rnd_label, 'labels', 'pile_imgs')
+#         img_pile = np.load(str(rnd_pile))
 
-        rnd_mask = np.char.replace(rnd_label, 'labels', 'mask_imgs')
-        img_mask = np.load(str(rnd_mask))
+#         rnd_mask = np.char.replace(rnd_label, 'labels', 'mask_imgs')
+#         img_mask = np.load(str(rnd_mask))
 
-        # return img_pile, img_mask, torch.from_numpy(label_, dtype=np.float32)
-        return torch.from_numpy(np.array(img_pile)), \
-            torch.from_numpy(np.array(img_mask)), \
-                torch.from_numpy(np.array([int(label)], dtype=np.float32))
+#         # return img_pile, img_mask, torch.from_numpy(label_, dtype=np.float32)
+#         return torch.from_numpy(np.array(img_pile)), \
+#             torch.from_numpy(np.array(img_mask)), \
+#                 torch.from_numpy(np.array([int(label)], dtype=np.float32))
 
-    def __len__(self):
-        return self.len_
+#     def __len__(self):
+#         return self.len_
 
-# Load the training dataset
-pile_files, train_, val_, tes_= split_train_val_tes(file_path='./data_224/labels/*', ratio_=[0.7,0.2,0.1])
+# # Load the training dataset
+# pile_files, train_, val_, tes_= split_train_val_tes(file_path='./data_224/labels/*', ratio_=[0.7,0.2,0.1])
 
-all_dataset = SiameseNetworkDataset(file_path=pile_files)
-all_dataloader = DataLoader(all_dataset,
-                        shuffle=True,
-                        num_workers=1,
-                        batch_size=1)
+# all_dataset = SiameseNetworkDataset(file_path=pile_files)
+# all_dataloader = DataLoader(all_dataset,
+#                         shuffle=True,
+#                         num_workers=1,
+#                         batch_size=1)
 
-# with torch.no_grad():
-correct_t = 0
-total_t = 0
-i = 0 
-for img0, img1, label in all_dataloader:
-    img0, img1, label = img0.to(device), img1.to(device), label.to(device)
+# # with torch.no_grad():
+# correct_t = 0
+# total_t = 0
+# i = 0 
+# for img0, img1, label in all_dataloader:
+#     img0, img1, label = img0.to(device), img1.to(device), label.to(device)
 
-    output = net(img0, img1)
-    pred = (torch.sigmoid(output) > 0.5)
-    correct_t += torch.sum(pred==label).item()
-    total_t += label.size(0)
-    i += 1
+#     output = net(img0, img1)
+#     pred = (torch.sigmoid(output) > 0.5)
+#     correct_t += torch.sum(pred==label).item()
+#     total_t += label.size(0)
+#     i += 1
 
-    output_ = torch.sigmoid(output)
-#   print(output_.cpu().numpy().reshape(-1))
-#   print(label.cpu().numpy().reshape(-1)) 
+#     output_ = torch.sigmoid(output)
+# #   print(output_.cpu().numpy().reshape(-1))
+# #   print(label.cpu().numpy().reshape(-1)) 
 
-tes_acc = 100 * correct_t/total_t
-print(f'test acc: {tes_acc:.4f}\n')
+# tes_acc = 100 * correct_t/total_t
+# print(f'test acc: {tes_acc:.4f}\n')
 
 ######################################################################################
 

@@ -81,10 +81,10 @@ class SiameseNetworkDataset(Dataset):
         # img_pile = Image.open(rnd_pile)
         ##########################################
 
-        rnd_pile = np.char.replace(rnd_label, 'labels', 'pile_imgs')
+        rnd_pile = np.char.replace(rnd_label, 'labels', 'pile_features')
         img_pile = np.load(str(rnd_pile))
 
-        rnd_mask = np.char.replace(rnd_label, 'labels', 'mask_imgs')
+        rnd_mask = np.char.replace(rnd_label, 'labels', 'mask_features')
         img_mask = np.load(str(rnd_mask))
 
         # return img_pile, img_mask, torch.from_numpy(label_, dtype=np.float32)
@@ -96,7 +96,7 @@ class SiameseNetworkDataset(Dataset):
         return self.len_
 
 # Load the training dataset
-pile_files, train_, val_, tes_= split_train_val_tes(file_path='./data_224/labels/*', ratio_=[0.7,0.2,0.1])
+pile_files, train_, val_, tes_= split_train_val_tes(file_path='./data_224_convolved/labels/*', ratio_=[0.8,0.2,0.0])
 
 all_dataset = SiameseNetworkDataset(file_path=pile_files)
 train_dataset = SiameseNetworkDataset(file_path=train_)
@@ -123,12 +123,29 @@ class Identity(nn.Module):
 class SiameseNetwork(nn.Module):
     def __init__(self):
         super(SiameseNetwork, self).__init__()
+
         self.fc = nn.Linear(num_ftrs_resnet*2, 1)
+
+        # self.fc = nn.Sequential(
+        #     nn.Linear(num_ftrs_resnet*2, 512),
+        #     nn.Dropout(p=0.5),
+        #     nn.ReLU(inplace=True),            
+            
+        #     # nn.Linear(1024, 512),
+        #     # nn.Dropout(p=0.8),
+        #     # nn.ReLU(inplace=True),
+
+        #     # nn.Linear(512, 256),
+        #     # nn.Dropout(p=0.8),
+        #     # nn.ReLU(inplace=True),
+            
+        #     nn.Linear(512,1))
 
     def forward(self, input1, input2):
         # In this function we pass in both images and obtain both vectors which are returned
         output12 = torch.cat((input1, input2),1)
-        output = self.fc(output12)
+        output = self.fc(output12) 
+
         return output
 
 # Load the training dataset
