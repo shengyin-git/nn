@@ -3,13 +3,14 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 
-def generateMaskMaps(file_path='./data_224_convolved'):
+data_path = 'data_180_convolved_res50'
+def generateMaskMaps(file_path=data_path):
 
     label_path = file_path + '/labels/'
     mask_path = file_path + '/mask_imgs/'
     
-    masks_tot_ones = np.zeros([224, 224])
-    masks_tot_zeros = np.zeros([224, 224])
+    masks_tot_ones = np.zeros([180, 180])
+    masks_tot_zeros = np.zeros([180, 180])
     
     labels_tot_ones = 0
     labels_tot_zeros = 0
@@ -55,7 +56,7 @@ print(np.min(np.min(masks_avg_zeros)))
 print(masks_avg_zeros)
 
 
-def countUniqueMasks(file_path = './data_224_convolved'):
+def countUniqueMasks(file_path = data_path):
     label_path = file_path + '/labels/'
     mask_path = file_path + '/mask_imgs/'
     

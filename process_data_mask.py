@@ -10,12 +10,14 @@ import json
 
 import torchvision
 from torchvision import models
-from torchvision.models import ResNet101_Weights
+from torchvision.models import ResNet18_Weights, ResNet50_Weights, ResNet101_Weights, ResNet152_Weights
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
 
-resnet = models.resnet101(weights=ResNet101_Weights.DEFAULT) 
+# resnet = models.resnet18(weights=ResNet18_Weights.DEFAULT) 
+resnet = models.resnet50(weights=ResNet50_Weights.DEFAULT) 
+# resnet = models.resnet101(weights=ResNet101_Weights.DEFAULT) 
 num_ftrs_resnet = resnet.fc.in_features
 resnet.fc = nn.Flatten()
 for param in resnet.parameters():
@@ -260,21 +262,21 @@ def main():
     len_sample = len(sample_files)
 
     for i in range(len_sample):
-        # print(sample_files[i])
+        print(i)
         temp_trial_files = glob.glob(sample_files[i]+'/*')
         trial_files = [fn for fn in temp_trial_files if 'trial' in fn]
         len_trial = len(trial_files)
 
         for j in range(len_trial):
-            print(trial_files[j])
+            # print(trial_files[j])
             p = process_data(\
                             pos_path = trial_files[j]+'/im_pick_pt.npy',\
                             ori_path = trial_files[j]+'/pick_orn.npy',\
                             image_path = trial_files[j]+'/rgb_image.jpg',\
                             masks_path = trial_files[j]+'/pruned_masks_no_back_vit_h_rgb_image_convolved.npz',\
                             label_path = trial_files[j]+'/masks_vit_h_removed_rgb_image_convolved.npy',\
-                            target_size = [224,224],\
-                            save_path = './data_224_convolved/',\
+                            target_size = [180,180],\
+                            save_path = './data_180_convolved_res50/',\
                             inspect = False)
             success = p.process_()
             print(success)

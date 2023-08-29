@@ -1,8 +1,31 @@
+method_random_full.zip
+method_random_full/
+
+results/
+
 data/
 outdated/data/
-method_random_full/
-method_random_full.zip
-data_224_/
-data_224_wrong/
-# results/
+data_224_res18/
+data_224_res50/
+data_224_res101/
 
+data_180_convolved_res50/
+data_224_convolved_res18/
+data_224_convolved_res50/
+data_224_convolved_res101/
+
+data_400_convolved_res18/
+data_400_convolved_res50/
+
+data_400_res18/
+data_400_res50/
+
+data_500_convolved_res18/
+data_500_convolved_res50/
+
+data_500_res50/
+data_600_convolved_res18/
+data_600_convolved_res50/
+data_600_res50/
+data_700_convolved_res50/
+data_800_convolved_res50/
