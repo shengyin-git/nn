@@ -43,30 +43,30 @@ def show_plot(iteration,loss):
     plt.plot(iteration,loss)
     plt.show()
 
-def split_train_val_tes(file_path, num_ = None, ratio_=None):
-    pile_files = glob.glob(file_path)
-    len_ = len(pile_files)
+# def split_train_val_tes(file_path, num_ = None, ratio_=None):
+#     pile_files = glob.glob(file_path)
+#     len_ = len(pile_files)
 
-    if num_ is not None:
-        num_train, num_val, num_tes = num_
-    else:
-        num_train = np.int32(len_*ratio_[0])
-        num_val = min(np.int32(len_*ratio_[1]), len_-num_train)
-        num_tes = min(np.int32(len_*ratio_[2]), len_-num_train-num_val)
+#     if num_ is not None:
+#         num_train, num_val, num_tes = num_
+#     else:
+#         num_train = np.int32(len_*ratio_[0])
+#         num_val = min(np.int32(len_*ratio_[1]), len_-num_train)
+#         num_tes = min(np.int32(len_*ratio_[2]), len_-num_train-num_val)
 
-    pile_train = np.random.choice(pile_files, size=num_train, replace=False)    
+#     pile_train = np.random.choice(pile_files, size=num_train, replace=False)    
 
-    pile_files = list(set(pile_files)-set(pile_train))
-    pile_val = np.random.choice(pile_files, size=num_val, replace=False)
+#     pile_files = list(set(pile_files)-set(pile_train))
+#     pile_val = np.random.choice(pile_files, size=num_val, replace=False)
 
-    pile_files = list(set(pile_files)-set(pile_val))
-    pile_tes = np.random.choice(pile_files, size=num_tes, replace=False)
+#     pile_files = list(set(pile_files)-set(pile_val))
+#     pile_tes = np.random.choice(pile_files, size=num_tes, replace=False)
 
-    train_ = pile_train
-    val_ = pile_val
-    tes_ = pile_tes
+#     train_ = pile_train
+#     val_ = pile_val
+#     tes_ = pile_tes
 
-    return pile_files, train_, val_, tes_
+#     return pile_files, train_, val_, tes_
 
 class SiameseNetworkDataset(Dataset):
     def __init__(self,file_path):
@@ -97,9 +97,14 @@ class SiameseNetworkDataset(Dataset):
 
 # Load the training dataset
 data_path = './data_224_res101/'
-pile_files, train_, val_, tes_= split_train_val_tes(file_path=data_path+'labels/*', ratio_=[0.8,0.2,0.0])
+# _files, train_, val_, tes_= split_train_val_tes(file_path=data_path+'labels/*', ratio_=[0.8,0.2,0.0])
 
-all_dataset = SiameseNetworkDataset(file_path=pile_files)
+files_ = glob.glob(data_path+'labels/*')
+train_ = glob.glob(data_path+'train/labels/*')
+val_ = glob.glob(data_path+'val/labels/*')
+tes_ = glob.glob(data_path+'tes/labels/*')
+
+all_dataset = SiameseNetworkDataset(file_path=files_)
 train_dataset = SiameseNetworkDataset(file_path=train_)
 val_dataset = SiameseNetworkDataset(file_path=val_)
 tes_dataset = SiameseNetworkDataset(file_path=tes_)

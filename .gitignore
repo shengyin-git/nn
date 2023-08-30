@@ -7,7 +7,12 @@ data/
 outdated/data/
 data_224_res18/
 data_224_res50/
-data_224_res101/
+
+data_224_res101/mask_imgs
+data_224_res101/mask_features
+data_224_res101/pile_imgs
+data_224_res101/pile_features
+data_224_res101/labels
 
 data_180_convolved_res50/
 data_224_convolved_res18/

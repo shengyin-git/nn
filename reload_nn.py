@@ -57,14 +57,14 @@ class SiameseNetwork(nn.Module):
 
 net = SiameseNetwork()
 
-net.load_state_dict(torch.load('./data_224_res101/my_net_2023_08_25_15_46_38.pt'))
+net.load_state_dict(torch.load('./data_224_res101/my_net_2023_08_30_11_12_39.pt'))
 
 net = net.to(device)
 
 net.eval()
 
 ## show some example images
-data_path = './data_224_res101'
+data_path = './data_224_res101/val'
 label_files = glob.glob(data_path+'/labels/*')
 num_files = len(label_files)
 
@@ -110,40 +110,28 @@ for i in range(num_files):
     plt.plot(h_/2, w_/2, "og", markersize=10)
     plt.axis('off')
 
+    os.makedirs('./nn/true_positive', exist_ok=True)
+    os.makedirs('./nn/false_negative', exist_ok=True)
+    os.makedirs('./nn/false_positive', exist_ok=True)
+    os.makedirs('./nn/true_negative', exist_ok=True)
+
     if label:
         if pred:
              print('true positive')
-             _img_path = str(np.char.replace(rnd_pile, 'pile_imgs', 'true_positive'))                
-            #  if os.path.exists(_img_path):
-            #     plt.savefig(_img_path)
-            #  else:
-            #     os.makedirs(_img_path, exist_ok=True)
-             plt.savefig(_img_path)
+             _img_path = str(np.char.replace(rnd_pile, 'pile_imgs', 'true_positive'))
         else:
-             print('false positive')
-             _img_path = str(np.char.replace(rnd_pile, 'pile_imgs', 'false_positive'))                
-            #  if os.path.exists(_img_path):
-            #     plt.savefig(_img_path)
-            #  else:
-            #     os.makedirs(_img_path, exist_ok=True)
-             plt.savefig(_img_path)
+             print('false negative')
+             _img_path = str(np.char.replace(rnd_pile, 'pile_imgs', 'false_negative'))   
     else:
         if pred:
-             print('false negative')
-             _img_path = str(np.char.replace(rnd_pile, 'pile_imgs', 'false_negative'))                
-            #  if os.path.exists(_img_path):
-            #     plt.savefig(_img_path)
-            #  else:
-            #     os.makedirs(_img_path, exist_ok=True)
-             plt.savefig(_img_path)
+             print('false positive')
+             _img_path = str(np.char.replace(rnd_pile, 'pile_imgs', 'false_positive'))   
         else:
              print('true negative')
-             _img_path = str(np.char.replace(rnd_pile, 'pile_imgs', 'true_negative'))                
-            #  if os.path.exists(_img_path):
-            #     plt.savefig(_img_path)
-            #  else:
-            #     os.makedirs(_img_path, exist_ok=True)
-             plt.savefig(_img_path)
+             _img_path = str(np.char.replace(rnd_pile, 'pile_imgs', 'true_negative'))  
+
+    _img_path = str(np.char.replace(_img_path, 'val', 'nn')) 
+    plt.savefig(_img_path)
 
     plt.close("all")
 

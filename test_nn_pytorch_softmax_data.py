@@ -43,30 +43,30 @@ def show_plot(iteration,loss):
     plt.plot(iteration,loss)
     plt.show()
 
-def split_train_val_tes(file_path, num_ = None, ratio_=None):
-    pile_files = glob.glob(file_path)
-    len_ = len(pile_files)
+# def split_train_val_tes(file_path, num_ = None, ratio_=None):
+#     pile_files = glob.glob(file_path)
+#     len_ = len(pile_files)
 
-    if num_ is not None:
-        num_train, num_val, num_tes = num_
-    else:
-        num_train = np.int32(len_*ratio_[0])
-        num_val = min(np.int32(len_*ratio_[1]), len_-num_train)
-        num_tes = min(np.int32(len_*ratio_[2]), len_-num_train-num_val)
+#     if num_ is not None:
+#         num_train, num_val, num_tes = num_
+#     else:
+#         num_train = np.int32(len_*ratio_[0])
+#         num_val = min(np.int32(len_*ratio_[1]), len_-num_train)
+#         num_tes = min(np.int32(len_*ratio_[2]), len_-num_train-num_val)
 
-    pile_train = np.random.choice(pile_files, size=num_train, replace=False)    
+#     pile_train = np.random.choice(pile_files, size=num_train, replace=False)    
 
-    pile_files = list(set(pile_files)-set(pile_train))
-    pile_val = np.random.choice(pile_files, size=num_val, replace=False)
+#     pile_files = list(set(pile_files)-set(pile_train))
+#     pile_val = np.random.choice(pile_files, size=num_val, replace=False)
 
-    pile_files = list(set(pile_files)-set(pile_val))
-    pile_tes = np.random.choice(pile_files, size=num_tes, replace=False)
+#     pile_files = list(set(pile_files)-set(pile_val))
+#     pile_tes = np.random.choice(pile_files, size=num_tes, replace=False)
 
-    train_ = pile_train
-    val_ = pile_val
-    tes_ = pile_tes
+#     train_ = pile_train
+#     val_ = pile_val
+#     tes_ = pile_tes
 
-    return pile_files, train_, val_, tes_
+#     return pile_files, train_, val_, tes_
 
 class SiameseNetworkDataset(Dataset):
     def __init__(self,file_path):
@@ -96,10 +96,15 @@ class SiameseNetworkDataset(Dataset):
         return self.len_
 
 # Load the training dataset
-data_path = './data_180_convolved_res50/'
-pile_files, train_, val_, tes_= split_train_val_tes(file_path=data_path+'labels/*', ratio_=[0.8,0.2,0.0])
+data_path = './data_224_res101/'
+# pile_files, train_, val_, tes_= split_train_val_tes(file_path=data_path+'labels/*', ratio_=[0.8,0.2,0.0])
 
-all_dataset = SiameseNetworkDataset(file_path=pile_files)
+files_ = glob.glob(data_path+'labels/*')
+train_ = glob.glob(data_path+'train/labels/*')
+val_ = glob.glob(data_path+'val/labels/*')
+tes_ = glob.glob(data_path+'tes/labels/*')
+
+all_dataset = SiameseNetworkDataset(file_path=files_)
 train_dataset = SiameseNetworkDataset(file_path=train_)
 val_dataset = SiameseNetworkDataset(file_path=val_)
 tes_dataset = SiameseNetworkDataset(file_path=tes_)
@@ -261,7 +266,7 @@ for epoch in range(500):
 
     if network_learned:
         valid_loss_min = batch_loss
-        torch.save(net.state_dict(), './data_224/my_net_'+ str(ts)+'.pt')
+        torch.save(net.state_dict(), data_path+'/my_net_'+ str(ts)+'.pt')
         print('Improvement-Detected, save-model')   
 
 fig = plt.figure(figsize=(20,10))
@@ -281,78 +286,6 @@ plt.xlabel('num_epochs', fontsize=12)
 plt.ylabel('loss', fontsize=12)
 plt.legend(loc='best')
 plt.savefig('./results/training_val_loss_' + str(ts) + '.png')
-
-# ############################################################
-# tes_dataloader = DataLoader(tes_dataset,
-#                         shuffle=True,
-#                         num_workers=1,
-#                         batch_size=8)
-
-# with torch.no_grad():
-#     # net.eval()
-#     correct_t = 0
-#     total_t = 0
-#     batch_loss = 0 
-#     for img0, img1, label in tes_dataloader:
-#       label = label.type(torch.LongTensor)
-#       img0, img1, label = img0.to(device), img1.to(device), label.to(device)
-
-#       output = net(img0, img1)
-#       loss_t = loss_fn(output, label)
-#       batch_loss += loss_t.item()
-
-#       _, pred = output.max(1)
-#       correct_t += torch.sum(pred==label).item()
-#       total_t += label.size(0)
-
-#     tes_acc = 100 * correct_t/total_t
-#     tes_loss = batch_loss/len(tes_dataloader) #
-#     print(f'test loss: {np.mean(tes_loss):.4f}, test acc: {tes_acc:.4f}\n')
-
-# ################################################################################
-# ## show example test
-# vis_dataloader = DataLoader(tes_dataset,
-#                         shuffle=True,
-#                         num_workers=1,
-#                         batch_size=8)
-# example_batch = next(iter(vis_dataloader))
-
-# with torch.no_grad():
-#     # net.eval()
-#     correct_t = 0
-#     total_t = 0
-#     batch_loss = 0
-#     img0, img1, label = example_batch
-#     label = label.type(torch.LongTensor)
-#     img0, img1, label = img0.to(device), img1.to(device), label.to(device)
-
-#     output = net(img0, img1)
-#     loss_t = loss_fn(output, label)
-#     batch_loss += loss_t.item()
-
-#     _, pred = output.max(1)
-#     correct_t += torch.sum(pred==label).item()
-#     total_t += label.size(0)
-
-#     output_ = torch.sigmoid(output)
-
-#     print(pred.cpu().numpy().reshape(-1))
-#     print(label.cpu().numpy().reshape(-1)) 
-
-#     tes_acc = 100 * correct_t/total_t
-#     tes_loss = batch_loss
-#     print(f'test loss: {np.mean(tes_loss):.4f}, test acc: {tes_acc:.4f}\n')
-
-# concatenated = torch.cat((example_batch[0], example_batch[1]),0)
-# imshow(torchvision.utils.make_grid(concatenated))
-
-
-
-
-
-
-
-
 
 
 
